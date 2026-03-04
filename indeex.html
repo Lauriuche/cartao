@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simulador de Taxas</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#10b981">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Taxas">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%2310b981' rx='100'/%3E%3Ctext x='50%25' y='50%25' font-size='256' fill='white' font-family='sans-serif' font-weight='bold' text-anchor='middle' dominant-baseline='central'%3E$%3C/text%3E%3C/svg%3E">
+    <link rel="manifest" id="pwa-manifest">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <script>
+        // Geração dinâmica do Manifest.json para manter o formato de ficheiro único
+        const manifest = {
+            "name": "Simulador de Taxas",
+            "short_name": "Taxas",
+            "start_url": window.location.pathname,
+            "display": "standalone",
+            "background_color": "#f3f4f6",
+            "theme_color": "#10b981",
+            "icons": [{
+                "src": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%2310b981' rx='100'/%3E%3Ctext x='50%25' y='50%25' font-size='256' fill='white' font-family='sans-serif' font-weight='bold' text-anchor='middle' dominant-baseline='central'%3E$%3C/text%3E%3C/svg%3E",
+                "sizes": "512x512",
+                "type": "image/svg+xml"
+            }]
+        };
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('pwa-manifest').setAttribute('href', 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest)));
+        });
+    </script>
+
+    <style>
+        /* Ocultar scrollbar mantendo a funcionalidade */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Animações */
+        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Prevenir 'flash' de variáveis do Vue antes de carregar */
+        [v-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans pb-10 min-h-screen">
+    
+    <div id="app" v-cloak>
+        <!-- Cabeçalho Principal -->
+        <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+            <div class="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
+                <div class="flex items-center">
+                    <i :class="['fa-solid fa-calculator w-6 h-6 mr-2 text-xl', theme.text]"></i>
+                    <h1 class="text-xl font-black text-gray-800 truncate pr-2">{{ settings.appName }}</h1>
+                </div>
+                <div class="flex items-center gap-1">
+                    <!-- Botão de Instalar PWA -->
+                    <button 
+                        v-if="showInstallBtn" 
+                        @click="installPWA"
+                        :class="['p-2 text-gray-400 hover:text-white transition-colors rounded-full flex items-center justify-center', theme.hover]"
+                        title="Instalar Aplicação"
+                    >
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+
+                    <button 
+                        @click="isAdmin ? handleLogout() : (showLogin = true)"
+                        :class="['p-2 text-gray-400 hover:text-white transition-colors rounded-full flex items-center justify-center', theme.hover]"
+                        :title="isAdmin ? 'Sair do Painel Admin' : 'Acesso Administrativo'"
+                    >
+                        <i :class="isAdmin ? 'fa-solid fa-right-from-bracket' : 'fa-solid fa-lock'"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-md mx-auto px-4 mt-6">
+            <!-- Badge Admin -->
+            <div v-if="isAdmin" :class="[theme.lightBg, theme.textDark, 'border', theme.border, 'px-4 py-2 rounded-lg mb-4 flex items-center justify-center text-sm font-bold shadow-sm animate-fade-in']">
+                <i class="fa-solid fa-unlock mr-2"></i> Painel de Administração
+            </div>
+
+            <!-- Menu Principal de Abas -->
+            <div class="flex bg-gray-200/80 p-1.5 rounded-xl mb-6 overflow-x-auto no-scrollbar shadow-inner gap-1">
+                <button
+                    @click="activeTab = 'calculator'"
+                    :class="['flex-1 py-2.5 px-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all whitespace-nowrap', activeTab === 'calculator' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50']"
+                >
+                    <i class="fa-solid fa-calculator hidden sm:block"></i> <span>Simulação</span>
+                </button>
+                
+                <template v-if="isAdmin">
+                    <button
+                        @click="activeTab = 'dashboard'"
+                        :class="['flex-1 py-2.5 px-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all whitespace-nowrap', activeTab === 'dashboard' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50']"
+                    >
+                        <i class="fa-solid fa-chart-pie hidden sm:block"></i> <span>Dashboard</span>
+                    </button>
+                    <button
+                        @click="activeTab = 'history'"
+                        :class="['flex-1 py-2.5 px-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all whitespace-nowrap', activeTab === 'history' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50']"
+                    >
+                        <i class="fa-solid fa-clock-rotate-left hidden sm:block"></i> <span>Histórico</span>
+                    </button>
+                    <button
+                        @click="activeTab = 'settings'"
+                        :class="['flex-1 py-2.5 px-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all whitespace-nowrap', activeTab === 'settings' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50']"
+                    >
+                        <i class="fa-solid fa-gear hidden sm:block"></i> <span>Definições</span>
+                    </button>
+                </template>
+            </div>
+
+            <!-- TAB: CALCULADORA -->
+            <div v-show="activeTab === 'calculator'" class="animate-fade-in space-y-6">
+                <!-- Botões de Partilha e Guardar (Admin) -->
+                <div v-if="isAdmin" class="flex gap-2 mb-2 animate-fade-in">
+                    <button @click="saveSimulation" :class="['flex-1 flex items-center justify-center py-2 px-4 bg-white border rounded-lg shadow-sm text-sm font-bold transition-colors', showSaveSuccess ? 'text-green-600 border-green-200 bg-green-50' : 'border-gray-200 text-gray-700 hover:bg-gray-50']">
+                        <i :class="showSaveSuccess ? 'fa-solid fa-check mr-2' : 'fa-solid fa-floppy-disk mr-2'"></i>
+                        {{ showSaveSuccess ? 'Guardada!' : 'Guardar Simulação' }}
+                    </button>
+                    <button @click="shareToWhatsApp" class="flex-1 flex items-center justify-center py-2 px-4 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow-sm text-sm font-bold transition-colors">
+                        <i class="fa-brands fa-whatsapp mr-2 text-lg"></i> Enviar WhatsApp
+                    </button>
+                </div>
+
+                <!-- Seleção de Máquina -->
+                <div v-if="machines.length > 1" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 animate-fade-in">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Selecione a Máquina</label>
+                    <select v-model="selectedMachineId" :class="['block w-full border-gray-300 rounded-lg border-2 p-3 text-gray-800 font-medium', theme.ring, theme.focus]">
+                        <option v-for="m in machines" :key="m.id" :value="m.id">{{ m.name }}</option>
+                    </select>
+                </div>
+
+                <!-- Abas Quero Receber / Quero Passar -->
+                <div class="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
+                    <button @click="calcMode = 'receber'" :class="['flex-1 py-3 text-sm font-semibold rounded-lg flex items-center justify-center transition-all', calcMode === 'receber' ? `${theme.lightBg} ${theme.text} border ${theme.border} shadow-sm` : 'text-gray-500 hover:bg-gray-50']">
+                        <i class="fa-solid fa-dollar-sign mr-1.5"></i> Quero Receber
+                    </button>
+                    <button @click="calcMode = 'passar'" :class="['flex-1 py-3 text-sm font-semibold rounded-lg flex items-center justify-center transition-all', calcMode === 'passar' ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50']">
+                        <i class="fa-solid fa-credit-card mr-1.5"></i> Quero Passar
+                    </button>
+                </div>
+
+                <!-- Inputs -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            {{ calcMode === 'receber' ? 'Valor que deseja receber na conta' : 'Valor da venda na máquina' }}
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <span class="text-gray-500 font-medium">R$</span>
+                            </div>
+                            <input type="number" v-model="inputValue" :class="['pl-12 block w-full border-gray-300 rounded-lg border-2 text-xl font-semibold p-3 text-gray-800', theme.ring, theme.focus]" placeholder="0.00" step="0.01" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Número de parcelas</label>
+                        <select v-model="installments" :class="['block w-full border-gray-300 rounded-lg border-2 text-lg font-medium p-3 bg-white text-gray-800', theme.ring, theme.focus]">
+                            <option v-for="i in 18" :key="i" :value="i">{{ i }}x {{ i === 1 ? 'à vista' : 'parcelado' }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Card de Resultados -->
+                <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                    <div class="p-5 border-b border-gray-100 bg-gray-50">
+                        <div class="flex items-center mb-5">
+                            <div :class="[theme.lightBg, 'p-2.5 rounded-full mr-4']">
+                                <i :class="['fa-solid fa-dollar-sign w-5 h-5 flex items-center justify-center text-lg', theme.text]"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium mb-0.5">Você receberá <span class="font-bold text-gray-700">Na hora</span></p>
+                                <p class="text-2xl font-bold text-gray-800 leading-none">{{ formatCurrency(results.valorReceber) }}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center">
+                            <div class="bg-blue-100 p-2.5 rounded-full mr-4">
+                                <i class="fa-solid fa-credit-card w-5 h-5 flex items-center justify-center text-blue-600 text-lg"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium mb-0.5">Se cobrar</p>
+                                <p class="text-2xl font-bold text-gray-800 leading-none">{{ formatCurrency(results.valorCobrar) }}</p>
+                                <p class="text-xs text-gray-500 mt-1.5">{{ installments }}x de {{ formatCurrency(results.valorParcela) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button @click="showDetails = !showDetails" class="w-full px-5 py-4 flex justify-between items-center text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors">
+                            <span>Taxas aplicadas</span>
+                            <i :class="showDetails ? 'fa-solid fa-chevron-up text-gray-400' : 'fa-solid fa-chevron-down text-gray-400'"></i>
+                        </button>
+                        
+                        <div v-show="showDetails" class="px-5 pb-5 pt-3 space-y-4 bg-white border-t border-gray-100">
+                            <div class="flex justify-between items-center">
+                                <p class="text-sm text-gray-600">Intermediação <span class="font-semibold">{{ results.baseRatePercent.toFixed(2).replace('.', ',') }}%</span></p>
+                                <p class="font-semibold text-gray-800">{{ formatCurrency(results.custoIntermediacao) }}</p>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <p class="text-sm text-gray-600">Fixa por transação</p>
+                                <p class="font-semibold text-gray-800">{{ formatCurrency(results.fixedFee) }}</p>
+                            </div>
+
+                            <div v-if="installments > 1 || results.custoServico > 0" class="flex justify-between items-center">
+                                <p class="text-sm text-gray-600 pr-4">
+                                    Parcelamento vendedor <span class="font-semibold">{{ ((installments > 1 ? results.interestPercent : 0) + results.serviceRatePercent).toFixed(2).replace('.', ',') }}%</span>{{ installments > 1 ? ' ao mês' : '' }}
+                                </p>
+                                <p class="font-semibold text-gray-800">{{ formatCurrency(results.custoParcelamento + results.custoServico) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: DASHBOARD -->
+            <div v-if="isAdmin && activeTab === 'dashboard'" class="animate-fade-in space-y-6">
+                <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden p-6">
+                    <div class="flex items-center mb-6 border-b border-gray-100 pb-4">
+                        <i :class="['fa-solid fa-chart-pie mr-2 text-xl', theme.text]"></i>
+                        <h2 class="text-xl font-bold text-gray-800">Dashboard Detalhado</h2>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Visão Cliente -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Visão do Cliente</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">Total Pago</p>
+                                    <p class="text-xl font-bold text-blue-700">{{ formatCurrency(results.valorCobrar) }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">Parcela</p>
+                                    <p class="text-lg font-semibold text-gray-800">{{ installments }}x de {{ formatCurrency(results.valorParcela) }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custos Máquina -->
+                        <div class="bg-red-50 p-4 rounded-lg border border-red-100">
+                            <h3 class="text-sm font-bold text-red-500 uppercase tracking-wider mb-3">Custos da Máquina ({{ results.machineName }})</h3>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <p class="text-sm text-gray-700">Intermediação ({{ results.baseRatePercent.toFixed(2) }}%)</p>
+                                    <p class="font-semibold text-red-600">-{{ formatCurrency(results.custoIntermediacao) }}</p>
+                                </div>
+                                <div v-if="results.fixedFee > 0" class="flex justify-between items-center">
+                                    <p class="text-sm text-gray-700">Taxa Fixa</p>
+                                    <p class="font-semibold text-red-600">-{{ formatCurrency(results.fixedFee) }}</p>
+                                </div>
+                                <div v-if="installments > 1" class="flex justify-between items-center">
+                                    <p class="text-sm text-gray-700">Parcelamento ({{ results.interestPercent.toFixed(2) }}% a.m.)</p>
+                                    <p class="font-semibold text-red-600">-{{ formatCurrency(results.custoParcelamento) }}</p>
+                                </div>
+                                <div class="flex justify-between items-center border-t border-red-200 pt-2 mt-2">
+                                    <p class="text-sm font-bold text-gray-800">Total Descontado</p>
+                                    <p class="font-bold text-red-700">-{{ formatCurrency(results.custoIntermediacao + results.custoParcelamento + results.fixedFee) }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seus Ganhos -->
+                        <div :class="[theme.lightBg, 'p-4 rounded-lg border', theme.border]">
+                            <h3 :class="['text-sm font-bold uppercase tracking-wider mb-3', theme.text]">Seus Ganhos e Repasse</h3>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <p class="text-sm text-gray-700">Saldo Liberado</p>
+                                    <p class="font-semibold text-gray-800">{{ formatCurrency(results.saldoMaquina) }}</p>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <p :class="['text-sm font-bold', theme.textDark]">Lucro Serviço ({{ results.serviceRatePercent.toFixed(2) }}%)</p>
+                                    <p :class="['font-bold', theme.text]">{{ formatCurrency(results.custoServico) }}</p>
+                                </div>
+                                <div :class="['flex justify-between items-center border-t pt-2 mt-2', theme.borderDark]">
+                                    <p class="text-sm font-bold text-gray-800">Valor Final (Repasse)</p>
+                                    <p class="font-bold text-gray-900 text-xl">{{ formatCurrency(results.valorReceber) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: HISTÓRICO -->
+            <div v-if="isAdmin && activeTab === 'history'" class="animate-fade-in space-y-4">
+                <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="fa-solid fa-clock-rotate-left mr-2 text-gray-500"></i> Histórico de Vendas
+                    </h2>
+                    <button v-if="history.length > 0" @click="clearHistory" class="text-red-500 hover:text-red-700 text-sm font-bold flex items-center">
+                        <i class="fa-solid fa-trash mr-1"></i> Limpar
+                    </button>
+                </div>
+
+                <div v-if="history.length === 0" class="text-center p-8 bg-gray-50 rounded-xl border border-gray-200 text-gray-500">
+                    Nenhuma simulação guardada ainda.
+                </div>
+                <div v-else v-for="item in history" :key="item.id" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-2">
+                    <div class="flex justify-between border-b border-gray-100 pb-2">
+                        <span class="text-xs text-gray-500 font-medium">{{ formatDate(item.date) }} • {{ item.machineName }}</span>
+                        <span :class="['text-xs font-bold px-2 py-0.5 rounded-full', item.mode === 'receber' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700']">
+                            {{ item.mode === 'receber' ? 'Quis Receber' : 'Quis Passar' }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <div>
+                            <p class="text-xs text-gray-500">Valor Cobrado</p>
+                            <p class="font-bold text-gray-800">{{ formatCurrency(item.valorCobrar) }} <span class="text-xs font-normal text-gray-500">({{ item.installments }}x)</span></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-gray-500">Seu Lucro</p>
+                            <p :class="['font-bold', theme.text]">{{ formatCurrency(item.custoServico) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: DEFINIÇÕES -->
+            <div v-if="isAdmin && activeTab === 'settings'" class="animate-fade-in space-y-6">
+                
+                <!-- Edição de Máquina Específica -->
+                <div v-if="editingMachineId" class="animate-fade-in space-y-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <button @click="editingMachineId = null" class="text-gray-500 hover:text-gray-800 font-bold text-sm">
+                            <i class="fa-solid fa-arrow-left mr-1"></i> Voltar
+                        </button>
+                        <h2 class="text-lg font-bold text-gray-800">{{ editingMachineId === 'new' ? 'Nova Máquina' : 'Editar Máquina' }}</h2>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Nome da Máquina</label>
+                            <input type="text" v-model="tempMachine.name" class="w-full border-gray-300 rounded-lg border-2 p-3 focus:border-blue-500 focus:ring-blue-500" />
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Juros Mensal (%)</label>
+                                <input type="number" step="0.01" v-model.number="tempMachine.monthlyInterest" class="w-full border-gray-300 rounded-lg border-2 p-3" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Taxa Fixa (R$)</label>
+                                <input type="number" step="0.01" v-model.number="tempMachine.fixedFee" class="w-full border-gray-300 rounded-lg border-2 p-3" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="p-4 bg-gray-50 border-b border-gray-200">
+                            <h3 class="font-bold text-gray-800">Taxas de Intermediação Base (%)</h3>
+                        </div>
+                        <div class="grid grid-cols-3 sm:grid-cols-6 gap-px bg-gray-200">
+                            <div v-for="i in 18" :key="i" class="bg-white p-3 flex flex-col justify-center items-center">
+                                <label class="text-xs font-semibold text-gray-600 mb-1 text-center">{{ i }}x</label>
+                                <input type="number" step="0.01" v-model.number="tempMachine.rates[i]" class="block w-full border-gray-300 rounded-md border text-sm p-2 text-center" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button v-if="editingMachineId !== 'new'" @click="deleteMachine" class="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-3 rounded-xl transition-colors">
+                            Excluir
+                        </button>
+                        <button @click="saveMachine" class="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors shadow-lg">
+                            Guardar Máquina
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Menu Geral de Definições -->
+                <div v-else class="animate-fade-in space-y-6">
+                    <div class="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm overflow-x-auto no-scrollbar mb-4">
+                        <button @click="settingsSubTab = 'machines'" :class="['flex-1 py-2 px-3 text-xs font-bold rounded-md whitespace-nowrap transition-all', settingsSubTab === 'machines' ? 'bg-gray-100 text-gray-800' : 'text-gray-500 hover:bg-gray-50']">Máquinas</button>
+                        <button @click="settingsSubTab = 'service'" :class="['flex-1 py-2 px-3 text-xs font-bold rounded-md whitespace-nowrap transition-all', settingsSubTab === 'service' ? 'bg-gray-100 text-gray-800' : 'text-gray-500 hover:bg-gray-50']">Seu Lucro</button>
+                        <button @click="settingsSubTab = 'brand'" :class="['flex-1 py-2 px-3 text-xs font-bold rounded-md whitespace-nowrap transition-all', settingsSubTab === 'brand' ? 'bg-gray-100 text-gray-800' : 'text-gray-500 hover:bg-gray-50']">Personalizar</button>
+                    </div>
+
+                    <!-- Sub Tab: Máquinas -->
+                    <div v-if="settingsSubTab === 'machines'" class="space-y-4">
+                        <div v-for="m in machines" :key="m.id" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
+                            <div>
+                                <p class="font-bold text-gray-800">{{ m.name }}</p>
+                                <p class="text-xs text-gray-500">Juros: {{ m.monthlyInterest }}% a.m | Fixa: R$ {{ m.fixedFee }}</p>
+                            </div>
+                            <button @click="startEditingMachine(m)" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                        </div>
+                        <button @click="startCreatingMachine" class="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-bold hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center">
+                            <i class="fa-solid fa-plus mr-2"></i> Adicionar Máquina
+                        </button>
+                    </div>
+
+                    <!-- Sub Tab: Serviço -->
+                    <div v-if="settingsSubTab === 'service'" :class="[theme.lightBg, 'rounded-xl shadow-sm border', theme.border, 'overflow-hidden p-5']">
+                        <label :class="['block text-sm font-bold mb-2', theme.textDark]">Sua Taxa de Serviço (%)</label>
+                        <p :class="['text-xs mb-4', theme.text]">Sua comissão, embutida no valor final.</p>
+                        <div class="relative mb-6">
+                            <input type="number" step="0.01" v-model.number="tempSettings.serviceRate" :class="['block w-full border-gray-300 rounded-lg border-2 p-3 pr-8 bg-white', theme.ring, theme.focus]" />
+                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none"><span class="text-gray-500 font-bold">%</span></div>
+                        </div>
+                        <button @click="saveGlobalSettings" :class="['w-full text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-colors', theme.bg]">
+                            Guardar Taxa
+                        </button>
+                    </div>
+
+                    <!-- Sub Tab: Marca -->
+                    <div v-if="settingsSubTab === 'brand'" class="space-y-4">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
+                            <h3 class="font-bold text-gray-800 flex items-center border-b pb-2 mb-2"><i class="fa-solid fa-palette mr-2"></i> Aparência</h3>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Nome da Aplicação</label>
+                                <input type="text" v-model="tempSettings.appName" class="w-full border-gray-300 rounded-lg border-2 p-3" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-2">Cor Principal</label>
+                                <div class="flex gap-2">
+                                    <button 
+                                        v-for="(themeData, key) in themeOptions" :key="key"
+                                        @click="tempSettings.theme = key"
+                                        :class="['w-10 h-10 rounded-full border-4 transition-all', themeData.classes.bg, tempSettings.theme === key ? 'border-gray-800 scale-110 shadow-md' : 'border-transparent opacity-80 hover:opacity-100']"
+                                        :title="themeData.name"
+                                    ></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
+                            <h3 class="font-bold text-gray-800 flex items-center border-b pb-2 mb-2"><i class="fa-solid fa-key mr-2"></i> Segurança</h3>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Palavra-passe do Admin</label>
+                                <input type="text" v-model="tempSettings.password" class="w-full border-gray-300 rounded-lg border-2 p-3 tracking-widest font-mono text-center" />
+                            </div>
+                        </div>
+
+                        <button @click="saveGlobalSettings" :class="['w-full text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-colors', theme.bg]">
+                            Guardar Definições
+                        </button>
+                    </div>
+
+                    <!-- Mensagem de Sucesso partilhada nas Definições -->
+                    <div v-if="showSaveSuccess" class="bg-green-100 text-green-800 p-3 rounded-lg text-center text-sm font-bold animate-fade-in">
+                        Configurações guardadas com sucesso!
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal de Login -->
+        <div v-if="showLogin" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4 animate-fade-in">
+            <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm">
+                <div :class="['flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4', theme.lightBg, theme.text]">
+                    <i class="fa-solid fa-lock text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-center text-gray-800 mb-2">Acesso Restrito</h3>
+                <p class="text-sm text-center text-gray-500 mb-6">Insira a palavra-passe para gerir o sistema.</p>
+                
+                <input
+                    type="password"
+                    v-model="passwordInput"
+                    @keyup.enter="handleLogin"
+                    placeholder="Palavra-passe"
+                    :class="['w-full border-2 p-3 rounded-xl mb-2 text-center text-lg tracking-widest outline-none transition-all', loginError ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500']"
+                    autofocus
+                />
+                <p v-if="loginError" class="text-red-500 text-xs text-center mb-4 font-bold animate-fade-in">Palavra-passe incorreta!</p>
+                <div v-else class="h-4 mb-4"></div>
+                
+                <div class="flex gap-3">
+                    <button @click="closeLogin" class="flex-1 py-3 text-gray-600 font-bold bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+                        Cancelar
+                    </button>
+                    <button @click="handleLogin" :class="['flex-1 py-3 text-white font-bold rounded-xl transition-colors shadow-lg', theme.bg]">
+                        Entrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Principal (Lógica do Vue) -->
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        const defaultRates = {
+            1: 3.15, 2: 2.95, 3: 2.95, 4: 2.95, 5: 2.95, 6: 2.95,
+            7: 3.50, 8: 3.50, 9: 3.50, 10: 3.50, 11: 3.50, 12: 3.50,
+            13: 3.50, 14: 3.50, 15: 3.50, 16: 3.50, 17: 3.50, 18: 3.50
+        };
+
+        const initialSettings = {
+            appName: 'Simulador de Taxas',
+            theme: 'emerald',
+            password: '6261',
+            serviceRate: 2.50
+        };
+
+        const initialMachines = [
+            { id: '1', name: 'Máquina Principal', rates: {...defaultRates}, monthlyInterest: 1.50, fixedFee: 0 }
+        ];
+
+        const themeOptions = {
+            emerald: { name: 'Esmeralda', classes: { bg: 'bg-emerald-600', text: 'text-emerald-600', border: 'border-emerald-200', ring: 'focus:ring-emerald-500', lightBg: 'bg-emerald-50', hover: 'hover:bg-emerald-700', textDark: 'text-emerald-800', borderDark: 'border-emerald-300' }},
+            blue: { name: 'Azul', classes: { bg: 'bg-blue-600', text: 'text-blue-600', border: 'border-blue-200', ring: 'focus:ring-blue-500', lightBg: 'bg-blue-50', hover: 'hover:bg-blue-700', textDark: 'text-blue-800', borderDark: 'border-blue-300' }},
+            purple: { name: 'Roxo', classes: { bg: 'bg-purple-600', text: 'text-purple-600', border: 'border-purple-200', ring: 'focus:ring-purple-500', lightBg: 'bg-purple-50', hover: 'hover:bg-purple-700', textDark: 'text-purple-800', borderDark: 'border-purple-300' }},
+            rose: { name: 'Rosa', classes: { bg: 'bg-rose-600', text: 'text-rose-600', border: 'border-rose-200', ring: 'focus:ring-rose-500', lightBg: 'bg-rose-50', hover: 'hover:bg-rose-700', textDark: 'text-rose-800', borderDark: 'border-rose-300' }},
+            slate: { name: 'Ardósia', classes: { bg: 'bg-slate-600', text: 'text-slate-600', border: 'border-slate-200', ring: 'focus:ring-slate-500', lightBg: 'bg-slate-50', hover: 'hover:bg-slate-700', textDark: 'text-slate-800', borderDark: 'border-slate-300' }},
+        };
+
+        createApp({
+            setup() {
+                const activeTab = ref('calculator');
+                const showDetails = ref(true);
+                
+                const settings = ref(JSON.parse(JSON.stringify(initialSettings)));
+                const machines = ref(JSON.parse(JSON.stringify(initialMachines)));
+                const history = ref([]);
+                
+                const inputValue = ref('100.00');
+                const installments = ref(18);
+                const calcMode = ref('receber');
+                const selectedMachineId = ref('1');
+
+                const isAdmin = ref(false);
+                const showLogin = ref(false);
+                const passwordInput = ref('');
+                const loginError = ref(false);
+
+                const settingsSubTab = ref('machines');
+                const editingMachineId = ref(null);
+                const tempMachine = ref(null);
+                const tempSettings = ref(JSON.parse(JSON.stringify(initialSettings)));
+                const showSaveSuccess = ref(false);
+
+                // Variáveis para instalação da PWA
+                const deferredPrompt = ref(null);
+                const showInstallBtn = ref(false);
+
+                onMounted(() => {
+                    const savedData = localStorage.getItem('appTaxasDataV3HTML');
+                    if (savedData) {
+                        try {
+                            const parsed = JSON.parse(savedData);
+                            if (parsed.settings) {
+                                settings.value = parsed.settings;
+                                tempSettings.value = JSON.parse(JSON.stringify(parsed.settings));
+                            }
+                            if (parsed.machines && parsed.machines.length > 0) {
+                                machines.value = parsed.machines;
+                                selectedMachineId.value = parsed.machines[0].id;
+                            }
+                            if (parsed.history) history.value = parsed.history;
+                        } catch (e) {
+                            console.error('Erro ao ler dados guardados:', e);
+                        }
+                    }
+
+                    // Interceptar evento de instalação da PWA
+                    window.addEventListener('beforeinstallprompt', (e) => {
+                        e.preventDefault();
+                        deferredPrompt.value = e;
+                        showInstallBtn.value = true;
+                    });
+                });
+
+                const installPWA = async () => {
+                    if (deferredPrompt.value) {
+                        deferredPrompt.value.prompt();
+                        const { outcome } = await deferredPrompt.value.userChoice;
+                        if (outcome === 'accepted') {
+                            showInstallBtn.value = false;
+                        }
+                        deferredPrompt.value = null;
+                    }
+                };
+
+                const saveData = () => {
+                    const data = { settings: settings.value, machines: machines.value, history: history.value };
+                    localStorage.setItem('appTaxasDataV3HTML', JSON.stringify(data));
+                };
+
+                const theme = computed(() => {
+                    return themeOptions[settings.value.theme]?.classes || themeOptions['emerald'].classes;
+                });
+
+                const formatCurrency = (value) => {
+                    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+                };
+
+                const formatDate = (dateString) => {
+                    return new Date(dateString).toLocaleDateString('pt-BR', { 
+                        day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' 
+                    });
+                };
+
+                const results = computed(() => {
+                    const numericValue = parseFloat(String(inputValue.value).replace(',', '.')) || 0;
+                    const machine = machines.value.find(m => m.id === selectedMachineId.value) || machines.value[0];
+                    
+                    const baseRatePercent = machine.rates[installments.value] || 0;
+                    const baseRateDecimal = baseRatePercent / 100;
+                    
+                    const interestPercent = parseFloat(machine.monthlyInterest) || 0;
+                    const i = interestPercent / 100;
+                    const n = installments.value;
+                    const fixedFee = parseFloat(machine.fixedFee) || 0;
+                    
+                    let installmentFeeDecimal = 0;
+                    if (n > 1 && i > 0) {
+                        const pvFactor = (1 - Math.pow(1 + i, -n)) / i;
+                        installmentFeeDecimal = 1 - (pvFactor / n);
+                    }
+
+                    const totalRateDecimal = baseRateDecimal + installmentFeeDecimal;
+                    const serviceDecimal = parseFloat(settings.value.serviceRate) / 100 || 0;
+
+                    let valorCobrar = 0;
+                    let valorReceber = 0;
+                    let saldoMaquina = 0;
+                    let custoServico = 0;
+
+                    if (calcMode.value === 'receber') {
+                        valorReceber = numericValue;
+                        saldoMaquina = valorReceber / (1 - serviceDecimal);
+                        valorCobrar = (saldoMaquina + fixedFee) / (1 - totalRateDecimal);
+                        custoServico = saldoMaquina - valorReceber;
+                    } else {
+                        valorCobrar = numericValue;
+                        saldoMaquina = (valorCobrar * (1 - totalRateDecimal)) - fixedFee;
+                        custoServico = saldoMaquina * serviceDecimal;
+                        valorReceber = saldoMaquina - custoServico;
+                    }
+
+                    return {
+                        machineName: machine.name,
+                        valorCobrar, valorReceber,
+                        valorParcela: valorCobrar / n,
+                        saldoMaquina,
+                        custoIntermediacao: valorCobrar * baseRateDecimal,
+                        custoParcelamento: valorCobrar * installmentFeeDecimal,
+                        custoServico, fixedFee, baseRatePercent, interestPercent,
+                        serviceRatePercent: parseFloat(settings.value.serviceRate) || 0
+                    };
+                });
+
+                const handleLogin = () => {
+                    if (passwordInput.value === settings.value.password) {
+                        isAdmin.value = true;
+                        closeLogin();
+                    } else {
+                        loginError.value = true;
+                    }
+                };
+
+                const closeLogin = () => {
+                    showLogin.value = false;
+                    passwordInput.value = '';
+                    loginError.value = false;
+                };
+
+                const handleLogout = () => {
+                    isAdmin.value = false;
+                    activeTab.value = 'calculator';
+                };
+
+                const shareToWhatsApp = () => {
+                    const text = `*${settings.value.appName}*\n\nSimulação de Venda:\nValor: ${formatCurrency(parseFloat(inputValue.value))}\nOpção: ${installments.value}x\n\n*Resumo para Pagamento:*\nTotal a pagar: ${formatCurrency(results.value.valorCobrar)}\nParcelamento: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                };
+
+                const saveSimulation = () => {
+                    const newRecord = {
+                        id: Date.now().toString(),
+                        date: new Date().toISOString(),
+                        mode: calcMode.value,
+                        installments: installments.value,
+                        originalValue: parseFloat(inputValue.value),
+                        ...results.value
+                    };
+                    history.value = [newRecord, ...history.value].slice(0, 50);
+                    saveData();
+                    showSaveSuccess.value = true;
+                    setTimeout(() => showSaveSuccess.value = false, 2000);
+                };
+
+                const clearHistory = () => {
+                    if(window.confirm("Tem a certeza que deseja limpar todo o histórico?")) {
+                        history.value = [];
+                        saveData();
+                    }
+                };
+
+                const startEditingMachine = (m) => {
+                    tempMachine.value = JSON.parse(JSON.stringify(m));
+                    editingMachineId.value = m.id;
+                };
+
+                const startCreatingMachine = () => {
+                    tempMachine.value = { id: Date.now().toString(), name: 'Nova Máquina', rates: {...defaultRates}, monthlyInterest: 0, fixedFee: 0 };
+                    editingMachineId.value = 'new';
+                };
+
+                const saveMachine = () => {
+                    if (editingMachineId.value === 'new') {
+                        machines.value.push(tempMachine.value);
+                    } else {
+                        const index = machines.value.findIndex(m => m.id === tempMachine.value.id);
+                        if(index !== -1) machines.value[index] = tempMachine.value;
+                    }
+                    saveData();
+                    editingMachineId.value = null;
+                };
+
+                const deleteMachine = () => {
+                    if(machines.value.length === 1) {
+                        alert("Deve manter pelo menos uma máquina!");
+                        return;
+                    }
+                    if(window.confirm("Remover esta máquina?")) {
+                        machines.value = machines.value.filter(m => m.id !== tempMachine.value.id);
+                        if (selectedMachineId.value === tempMachine.value.id) selectedMachineId.value = machines.value[0].id;
+                        saveData();
+                        editingMachineId.value = null;
+                    }
+                };
+
+                const saveGlobalSettings = () => {
+                    settings.value = JSON.parse(JSON.stringify(tempSettings.value));
+                    saveData();
+                    showSaveSuccess.value = true;
+                    setTimeout(() => showSaveSuccess.value = false, 3000);
+                };
+
+                return {
+                    activeTab, showDetails, settings, machines, history, inputValue, installments, calcMode, selectedMachineId,
+                    isAdmin, showLogin, passwordInput, loginError, settingsSubTab, editingMachineId, tempMachine, tempSettings, showSaveSuccess,
+                    themeOptions, theme, results, formatCurrency, formatDate, handleLogin, closeLogin, handleLogout, shareToWhatsApp,
+                    saveSimulation, clearHistory, startEditingMachine, startCreatingMachine, saveMachine, deleteMachine, saveGlobalSettings,
+                    showInstallBtn, installPWA
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
