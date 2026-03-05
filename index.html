@@ -6,15 +6,43 @@
     <title>Simulador de Taxas</title>
     
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#10b981">
+    <meta name="theme-color" content="#00ff88">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Taxas">
-    <link rel="apple-touch-icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%2310b981' rx='100'/%3E%3Ctext x='50%25' y='50%25' font-size='256' fill='white' font-family='sans-serif' font-weight='bold' text-anchor='middle' dominant-baseline='central'%3E$%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%2300ff88' rx='100'/%3E%3Ctext x='50%25' y='50%25' font-size='256' fill='black' font-family='sans-serif' font-weight='bold' text-anchor='middle' dominant-baseline='central'%3E$%3C/text%3E%3C/svg%3E">
     <link rel="manifest" id="pwa-manifest">
 
-    <!-- Tailwind CSS -->
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS Script for Config -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        neon: {
+                            DEFAULT: '#00ff88',
+                            glow: 'rgba(0, 255, 136, 0.3)',
+                            dim: 'rgba(0, 255, 136, 0.1)'
+                        },
+                        surface: {
+                            DEFAULT: 'rgba(15, 15, 15, 0.9)',
+                            border: 'rgba(255, 255, 255, 0.08)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -22,63 +50,121 @@
     <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
-    <script>
-        // Geração dinâmica do Manifest.json para manter o formato de ficheiro único
-        const manifest = {
-            "name": "Simulador de Taxas",
-            "short_name": "Taxas",
-            "start_url": window.location.pathname,
-            "display": "standalone",
-            "background_color": "#f3f4f6",
-            "theme_color": "#10b981",
-            "icons": [{
-                "src": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%2310b981' rx='100'/%3E%3Ctext x='50%25' y='50%25' font-size='256' fill='white' font-family='sans-serif' font-weight='bold' text-anchor='middle' dominant-baseline='central'%3E$%3C/text%3E%3C/svg%3E",
-                "sizes": "512x512",
-                "type": "image/svg+xml"
-            }]
-        };
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('pwa-manifest').setAttribute('href', 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest)));
-        });
-    </script>
-
     <style>
         /* Ocultar scrollbar mantendo a funcionalidade */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Animações */
-        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Animações base */
+        .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Prevenir 'flash' de variáveis do Vue antes de carregar */
         [v-cloak] { display: none !important; }
+
+        /* Estilos base (Fundo dinâmico Dia/Noite configurado pelo Vue) */
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background 0.5s ease;
+            background: radial-gradient(circle at center, var(--bg-center, #f0fdf4) 0%, var(--bg-edge, #e2e8f0) 100%);
+            min-height: 100vh;
+        }
+
+        .dark body {
+            color: #ffffff;
+        }
+
+        /* Brilho Ambiente presente em ambos os modos */
+        .ambient-glow {
+            position: fixed;
+            width: 80vw;
+            height: 80vw;
+            filter: blur(150px);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease, background 0.5s ease;
+        }
+
+        /* Glassmorphism (Cartões Translúcidos) */
+        .dark .glass-card {
+            background: var(--surface-default, rgba(15, 15, 15, 0.85)) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.08)) !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+
+        /* Botões Premium CTA */
+        .btn-cta {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-cta:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.1);
+        }
+        .btn-cta:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+        
+        .dark .btn-neon {
+            background: #00ff88 !important;
+            color: #000000 !important;
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3) !important;
+            border: none !important;
+        }
+
+        .dark .btn-neon-outline {
+            background: rgba(0, 255, 136, 0.1) !important;
+            color: #00ff88 !important;
+            border: 1px solid rgba(0, 255, 136, 0.2) !important;
+            box-shadow: none !important;
+        }
+
+        /* Input Transitions */
+        input, select, button { transition: background-color 0.3s, border-color 0.3s, color 0.3s; }
+        
+        .dark select option { background-color: #0f0f0f; color: #fff; }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans pb-10 min-h-screen">
+<body class="transition-colors duration-500 font-sans pb-10" id="main-body">
     
     <div id="app" v-cloak>
+        <!-- Efeito de Brilho Ambiente Dinâmico (Presente em Dia e Noite) -->
+        <div class="ambient-glow" :style="{ background: currentGlowColor, opacity: settings.isDarkMode ? 1 : 0.4 }"></div>
+
         <!-- Cabeçalho Principal -->
-        <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <header class="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl shadow-sm border-b border-gray-200 dark:border-white/10 sticky top-0 z-50 transition-colors relative">
             <div class="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
                 <div class="flex items-center">
                     <i :class="['fa-solid fa-calculator w-6 h-6 mr-2 text-xl', theme.text]"></i>
-                    <h1 class="text-xl font-black text-gray-800 truncate pr-2">{{ settings.appName }}</h1>
+                    <h1 class="text-xl font-extrabold text-gray-800 dark:text-white truncate pr-2 tracking-tight">{{ settings.appName }}</h1>
                 </div>
-                <div class="flex items-center gap-1">
-                    <!-- Botão de Instalar PWA -->
+                <div class="flex items-center gap-2">
+                    <!-- Botão de Tema (Dia/Noite) -->
                     <button 
-                        v-if="showInstallBtn" 
-                        @click="installPWA"
-                        :class="['p-2 text-gray-400 hover:text-white transition-colors rounded-full flex items-center justify-center', theme.hover]"
-                        title="Instalar Aplicação"
+                        @click="toggleDarkMode"
+                        class="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all rounded-full flex items-center justify-center btn-cta"
+                        title="Alternar Modo Dia/Noite"
                     >
-                        <i class="fa-solid fa-download"></i>
+                        <i :class="settings.isDarkMode ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
                     </button>
 
+                    <!-- Botão de Cor -->
+                    <button 
+                        @click="cycleTheme"
+                        class="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all rounded-full flex items-center justify-center btn-cta"
+                        title="Mudar Cor do Tema"
+                    >
+                        <i class="fa-solid fa-palette"></i>
+                    </button>
+
+                    <!-- Botão Admin -->
                     <button 
                         @click="isAdmin ? handleLogout() : (showLogin = true)"
-                        :class="['p-2 text-gray-400 hover:text-white transition-colors rounded-full flex items-center justify-center', theme.hover]"
+                        class="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all rounded-full flex items-center justify-center btn-cta"
                         :title="isAdmin ? 'Sair do Painel Admin' : 'Acesso Administrativo'"
                     >
                         <i :class="isAdmin ? 'fa-solid fa-right-from-bracket' : 'fa-solid fa-lock'"></i>
@@ -87,17 +173,17 @@
             </div>
         </header>
 
-        <main class="max-w-md mx-auto px-4 mt-6">
+        <main class="max-w-md mx-auto px-4 mt-8 relative z-10">
             <!-- Badge Admin -->
-            <div v-if="isAdmin" :class="[theme.lightBg, theme.textDark, 'border', theme.border, 'px-4 py-2 rounded-lg mb-4 flex items-center justify-center text-sm font-bold shadow-sm animate-fade-in']">
+            <div v-if="isAdmin" :class="['dark:bg-neon-dim dark:text-neon dark:border-neon/20 px-5 py-2.5 rounded-full mb-6 flex items-center justify-center text-xs font-extrabold shadow-sm animate-fade-in uppercase tracking-wider', theme.lightBg, theme.textDark, 'border', theme.border]">
                 <i class="fa-solid fa-unlock mr-2"></i> Painel de Administração
             </div>
 
             <!-- Menu Principal de Abas -->
-            <div class="flex bg-gray-200/80 p-1.5 rounded-xl mb-6 overflow-x-auto no-scrollbar shadow-inner gap-1">
+            <div class="flex bg-white/60 dark:bg-black/40 backdrop-blur-xl p-1.5 rounded-[24px] mb-8 overflow-x-auto no-scrollbar shadow-sm border border-white dark:border-white/5 gap-1 transition-colors">
                 <button
                     @click="activeTab = 'calculator'"
-                    :class="['flex-1 py-2.5 px-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all whitespace-nowrap', activeTab === 'calculator' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50']"
+                    :class="['flex-1 py-3 px-2 text-sm font-bold rounded-[20px] flex items-center justify-center gap-2 transition-all whitespace-nowrap btn-cta', activeTab === 'calculator' ? 'bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']"
                 >
                     <i class="fa-solid fa-calculator hidden sm:block"></i> <span>Simulação</span>
                 </button>
@@ -105,19 +191,19 @@
                 <template v-if="isAdmin">
                     <button
                         @click="activeTab = 'dashboard'"
-                        :class="['flex-1 py-2.5 px-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all whitespace-nowrap', activeTab === 'dashboard' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50']"
+                        :class="['flex-1 py-3 px-2 text-sm font-bold rounded-[20px] flex items-center justify-center gap-2 transition-all whitespace-nowrap btn-cta', activeTab === 'dashboard' ? 'bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']"
                     >
                         <i class="fa-solid fa-chart-pie hidden sm:block"></i> <span>Dashboard</span>
                     </button>
                     <button
                         @click="activeTab = 'history'"
-                        :class="['flex-1 py-2.5 px-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all whitespace-nowrap', activeTab === 'history' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50']"
+                        :class="['flex-1 py-3 px-2 text-sm font-bold rounded-[20px] flex items-center justify-center gap-2 transition-all whitespace-nowrap btn-cta', activeTab === 'history' ? 'bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']"
                     >
                         <i class="fa-solid fa-clock-rotate-left hidden sm:block"></i> <span>Histórico</span>
                     </button>
                     <button
                         @click="activeTab = 'settings'"
-                        :class="['flex-1 py-2.5 px-2 text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-all whitespace-nowrap', activeTab === 'settings' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50']"
+                        :class="['flex-1 py-3 px-2 text-sm font-bold rounded-[20px] flex items-center justify-center gap-2 transition-all whitespace-nowrap btn-cta', activeTab === 'settings' ? 'bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']"
                     >
                         <i class="fa-solid fa-gear hidden sm:block"></i> <span>Definições</span>
                     </button>
@@ -127,103 +213,105 @@
             <!-- TAB: CALCULADORA -->
             <div v-show="activeTab === 'calculator'" class="animate-fade-in space-y-6">
                 <!-- Botões de Partilha e Guardar (Admin) -->
-                <div v-if="isAdmin" class="flex gap-2 mb-2 animate-fade-in">
-                    <button @click="saveSimulation" :class="['flex-1 flex items-center justify-center py-2 px-4 bg-white border rounded-lg shadow-sm text-sm font-bold transition-colors', showSaveSuccess ? 'text-green-600 border-green-200 bg-green-50' : 'border-gray-200 text-gray-700 hover:bg-gray-50']">
+                <div v-if="isAdmin" class="flex gap-3 mb-2 animate-fade-in">
+                    <button @click="saveSimulation" :class="['flex-1 flex items-center justify-center py-4 px-4 glass-card bg-white/90 dark:bg-[#0f0f0f] border rounded-[24px] shadow-sm text-sm font-extrabold transition-colors btn-cta', showSaveSuccess ? 'text-green-600 dark:text-neon border-green-200 dark:border-neon/30 bg-green-50 dark:bg-neon/10' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-white']">
                         <i :class="showSaveSuccess ? 'fa-solid fa-check mr-2' : 'fa-solid fa-floppy-disk mr-2'"></i>
-                        {{ showSaveSuccess ? 'Guardada!' : 'Guardar Simulação' }}
+                        {{ showSaveSuccess ? 'Guardada!' : 'Guardar' }}
                     </button>
-                    <button @click="shareToWhatsApp" class="flex-1 flex items-center justify-center py-2 px-4 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow-sm text-sm font-bold transition-colors">
-                        <i class="fa-brands fa-whatsapp mr-2 text-lg"></i> Enviar WhatsApp
+                    <button @click="shareToWhatsApp" class="flex-1 flex items-center justify-center py-4 px-4 bg-[#25D366] text-white rounded-[24px] shadow-[0_10px_30px_rgba(37,211,102,0.3)] text-sm font-extrabold transition-colors btn-cta">
+                        <i class="fa-brands fa-whatsapp mr-2 text-xl"></i> Enviar
                     </button>
                 </div>
 
                 <!-- Seleção de Máquina -->
-                <div v-if="machines.length > 1" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 animate-fade-in">
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Selecione a Máquina</label>
-                    <select v-model="selectedMachineId" :class="['block w-full border-gray-300 rounded-lg border-2 p-3 text-gray-800 font-medium', theme.ring, theme.focus]">
-                        <option v-for="m in machines" :key="m.id" :value="m.id">{{ m.name }}</option>
+                <div v-if="machines.length > 1" class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-5 rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 animate-fade-in transition-colors">
+                    <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">Selecione a Máquina</label>
+                    <select v-model="selectedMachineId" :class="['block w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 rounded-[20px] border p-4 text-gray-800 dark:text-white font-bold outline-none transition-colors shadow-sm', theme.focus, 'dark:focus:border-neon']">
+                        <option v-for="m in machines" :key="m.id" :value="m.id" class="dark:bg-gray-900">{{ m.name }}</option>
                     </select>
                 </div>
 
                 <!-- Abas Quero Receber / Quero Passar -->
-                <div class="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex">
-                    <button @click="calcMode = 'receber'" :class="['flex-1 py-3 text-sm font-semibold rounded-lg flex items-center justify-center transition-all', calcMode === 'receber' ? `${theme.lightBg} ${theme.text} border ${theme.border} shadow-sm` : 'text-gray-500 hover:bg-gray-50']">
-                        <i class="fa-solid fa-dollar-sign mr-1.5"></i> Quero Receber
+                <div class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-2 rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 flex transition-colors">
+                    <button @click="calcMode = 'receber'" :class="['flex-1 py-4 text-sm font-extrabold rounded-[24px] flex items-center justify-center transition-all btn-cta', calcMode === 'receber' ? `${theme.lightBg} ${theme.textDark} border ${theme.border} shadow-sm dark:bg-neon-dim dark:text-neon dark:border-neon/20` : 'text-gray-500 dark:text-[#a0a0a0] border border-transparent']">
+                        <i class="fa-solid fa-dollar-sign mr-2"></i> Quero Receber
                     </button>
-                    <button @click="calcMode = 'passar'" :class="['flex-1 py-3 text-sm font-semibold rounded-lg flex items-center justify-center transition-all', calcMode === 'passar' ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm' : 'text-gray-500 hover:bg-gray-50']">
-                        <i class="fa-solid fa-credit-card mr-1.5"></i> Quero Passar
+                    <button @click="calcMode = 'passar'" :class="['flex-1 py-4 text-sm font-extrabold rounded-[24px] flex items-center justify-center transition-all btn-cta', calcMode === 'passar' ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-500/30' : 'text-gray-500 dark:text-[#a0a0a0] border border-transparent']">
+                        <i class="fa-solid fa-credit-card mr-2"></i> Quero Passar
                     </button>
                 </div>
 
                 <!-- Inputs -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-5">
+                <div class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-6 rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 space-y-6 transition-colors">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            {{ calcMode === 'receber' ? 'Valor que deseja receber na conta' : 'Valor da venda na máquina' }}
+                        <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">
+                            {{ calcMode === 'receber' ? 'Valor que deseja receber' : 'Valor da venda' }}
                         </label>
                         <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span class="text-gray-500 font-medium">R$</span>
+                            <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                                <span class="text-gray-400 dark:text-[#a0a0a0] font-bold text-lg">R$</span>
                             </div>
-                            <input type="number" v-model="inputValue" :class="['pl-12 block w-full border-gray-300 rounded-lg border-2 text-xl font-semibold p-3 text-gray-800', theme.ring, theme.focus]" placeholder="0.00" step="0.01" />
+                            <input type="number" v-model="inputValue" :class="['pl-14 block w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 rounded-[24px] border p-5 text-2xl font-black text-gray-800 dark:text-white transition-colors outline-none shadow-sm', theme.focus, 'dark:focus:border-neon']" placeholder="0.00" step="0.01" />
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Número de parcelas</label>
-                        <select v-model="installments" :class="['block w-full border-gray-300 rounded-lg border-2 text-lg font-medium p-3 bg-white text-gray-800', theme.ring, theme.focus]">
-                            <option v-for="i in 18" :key="i" :value="i">{{ i }}x {{ i === 1 ? 'à vista' : 'parcelado' }}</option>
+                        <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">Número de parcelas</label>
+                        <!-- Agora itera apenas pelas parcelas disponíveis (onde a taxa não é 0%) -->
+                        <select v-model="installments" :class="['block w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 rounded-[24px] border p-5 text-xl font-bold text-gray-800 dark:text-white transition-colors outline-none shadow-sm', theme.focus, 'dark:focus:border-neon']">
+                            <option v-for="i in availableInstallments" :key="i" :value="i" class="dark:bg-gray-900">{{ i }}x {{ i === 1 ? 'à vista' : 'parcelado' }}</option>
                         </select>
                     </div>
                 </div>
 
                 <!-- Card de Resultados -->
-                <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-                    <div class="p-5 border-b border-gray-100 bg-gray-50">
-                        <div class="flex items-center mb-5">
-                            <div :class="[theme.lightBg, 'p-2.5 rounded-full mr-4']">
-                                <i :class="['fa-solid fa-dollar-sign w-5 h-5 flex items-center justify-center text-lg', theme.text]"></i>
+                <div class="bg-white/95 dark:bg-[#0f0f0f] glass-card rounded-[32px] shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden transition-colors flex flex-col">
+                    <div class="p-8 border-b border-gray-100 dark:border-white/5 bg-gray-50/80 dark:bg-white/[0.02]">
+                        <div class="flex items-center mb-8">
+                            <div :class="[theme.lightBg, 'p-4 rounded-[20px] mr-5 shadow-sm dark:bg-neon-dim dark:border dark:border-neon/20']">
+                                <i :class="['fa-solid fa-dollar-sign w-6 h-6 flex items-center justify-center text-2xl dark:text-neon', theme.text]"></i>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-500 font-medium mb-0.5">Você receberá <span class="font-bold text-gray-700">Na hora</span></p>
-                                <p class="text-2xl font-bold text-gray-800 leading-none">{{ formatCurrency(results.valorReceber) }}</p>
+                                <p class="text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-1">Você receberá <span class="text-gray-800 dark:text-white">Na hora</span></p>
+                                <p class="text-4xl font-black text-gray-800 dark:text-white leading-none tracking-tight">{{ formatCurrency(results.valorReceber) }}</p>
                             </div>
                         </div>
 
                         <div class="flex items-center">
-                            <div class="bg-blue-100 p-2.5 rounded-full mr-4">
-                                <i class="fa-solid fa-credit-card w-5 h-5 flex items-center justify-center text-blue-600 text-lg"></i>
+                            <div class="bg-blue-100 dark:bg-blue-900/30 dark:border dark:border-blue-500/20 p-4 rounded-[20px] mr-5 shadow-sm">
+                                <i class="fa-solid fa-credit-card w-6 h-6 flex items-center justify-center text-blue-600 dark:text-blue-400 text-2xl"></i>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-500 font-medium mb-0.5">Se cobrar</p>
-                                <p class="text-2xl font-bold text-gray-800 leading-none">{{ formatCurrency(results.valorCobrar) }}</p>
-                                <p class="text-xs text-gray-500 mt-1.5">{{ installments }}x de {{ formatCurrency(results.valorParcela) }}</p>
+                                <p class="text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-1">Se cobrar</p>
+                                <p class="text-2xl font-black text-gray-800 dark:text-white leading-none tracking-tight">{{ formatCurrency(results.valorCobrar) }}</p>
+                                <p class="text-xs font-bold text-blue-600 dark:text-blue-400 mt-2 bg-blue-50 dark:bg-blue-900/20 inline-block px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800/50">{{ installments }}x de {{ formatCurrency(results.valorParcela) }}</p>
                             </div>
                         </div>
                     </div>
 
                     <div>
-                        <button @click="showDetails = !showDetails" class="w-full px-5 py-4 flex justify-between items-center text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors">
-                            <span>Taxas aplicadas</span>
-                            <i :class="showDetails ? 'fa-solid fa-chevron-up text-gray-400' : 'fa-solid fa-chevron-down text-gray-400'"></i>
+                        <button @click="showDetails = !showDetails" class="w-full px-8 py-5 flex justify-between items-center text-sm font-extrabold text-gray-700 dark:text-[#a0a0a0] hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors">
+                            <span class="uppercase tracking-widest text-xs">Detalhe das Taxas</span>
+                            <i :class="showDetails ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"></i>
                         </button>
                         
-                        <div v-show="showDetails" class="px-5 pb-5 pt-3 space-y-4 bg-white border-t border-gray-100">
+                        <div v-show="showDetails" class="px-8 pb-8 pt-2 space-y-5 bg-white/50 dark:bg-transparent border-t border-gray-100 dark:border-white/5">
                             <div class="flex justify-between items-center">
-                                <p class="text-sm text-gray-600">Intermediação <span class="font-semibold">{{ results.baseRatePercent.toFixed(2).replace('.', ',') }}%</span></p>
-                                <p class="font-semibold text-gray-800">{{ formatCurrency(results.custoIntermediacao) }}</p>
+                                <p class="text-sm font-medium text-gray-600 dark:text-[#a0a0a0]">Intermediação <span class="font-bold text-gray-800 dark:text-white ml-1">{{ results.baseRatePercent.toFixed(2).replace('.', ',') }}%</span></p>
+                                <p class="font-bold text-gray-800 dark:text-white">{{ formatCurrency(results.custoIntermediacao) }}</p>
                             </div>
                             
-                            <div class="flex justify-between items-center">
-                                <p class="text-sm text-gray-600">Fixa por transação</p>
-                                <p class="font-semibold text-gray-800">{{ formatCurrency(results.fixedFee) }}</p>
+                            <!-- Taxa Fixa Oculta Dinamicamente se for igual a 0 -->
+                            <div v-if="results.fixedFee > 0" class="flex justify-between items-center">
+                                <p class="text-sm font-medium text-gray-600 dark:text-[#a0a0a0]">Fixa por transação</p>
+                                <p class="font-bold text-gray-800 dark:text-white">{{ formatCurrency(results.fixedFee) }}</p>
                             </div>
 
-                            <div v-if="installments > 1 || results.custoServico > 0" class="flex justify-between items-center">
-                                <p class="text-sm text-gray-600 pr-4">
-                                    Parcelamento vendedor <span class="font-semibold">{{ ((installments > 1 ? results.interestPercent : 0) + results.serviceRatePercent).toFixed(2).replace('.', ',') }}%</span>{{ installments > 1 ? ' ao mês' : '' }}
+                            <div v-if="installments > 1 || results.custoServico > 0" class="flex justify-between items-center bg-gray-100/80 dark:bg-white/5 p-4 rounded-[20px] border border-transparent dark:border-white/5">
+                                <p class="text-sm font-medium text-gray-600 dark:text-[#a0a0a0] pr-4">
+                                    Parcelamento <span class="font-bold text-gray-800 dark:text-white ml-1">{{ ((installments > 1 ? results.interestPercent : 0) + results.serviceRatePercent).toFixed(2).replace('.', ',') }}%</span><span class="text-xs opacity-70">{{ installments > 1 ? ' ao mês' : '' }}</span>
                                 </p>
-                                <p class="font-semibold text-gray-800">{{ formatCurrency(results.custoParcelamento + results.custoServico) }}</p>
+                                <p class="font-black text-gray-900 dark:text-white">{{ formatCurrency(results.custoParcelamento + results.custoServico) }}</p>
                             </div>
                         </div>
                     </div>
@@ -232,66 +320,63 @@
 
             <!-- TAB: DASHBOARD -->
             <div v-if="isAdmin && activeTab === 'dashboard'" class="animate-fade-in space-y-6">
-                <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden p-6">
-                    <div class="flex items-center mb-6 border-b border-gray-100 pb-4">
-                        <i :class="['fa-solid fa-chart-pie mr-2 text-xl', theme.text]"></i>
-                        <h2 class="text-xl font-bold text-gray-800">Dashboard Detalhado</h2>
+                <div class="bg-white/95 dark:bg-[#0f0f0f] glass-card rounded-[32px] shadow-xl border border-gray-200 dark:border-white/10 overflow-hidden p-8 transition-colors">
+                    <div class="flex items-center mb-8 border-b border-gray-100 dark:border-white/10 pb-5">
+                        <i :class="['fa-solid fa-chart-pie mr-4 text-3xl dark:text-neon', theme.text]"></i>
+                        <h2 class="text-2xl font-black text-gray-800 dark:text-white tracking-tight">Dashboard</h2>
                     </div>
 
                     <div class="space-y-6">
-                        <!-- Visão Cliente -->
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Visão do Cliente</h3>
+                        <div class="bg-gray-50/80 dark:bg-black/50 p-5 rounded-[24px] border border-gray-200 dark:border-white/5 shadow-sm">
+                            <h3 class="text-xs font-black text-gray-400 dark:text-[#a0a0a0] uppercase tracking-widest mb-4">Visão do Cliente</h3>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p class="text-sm text-gray-600">Total Pago</p>
-                                    <p class="text-xl font-bold text-blue-700">{{ formatCurrency(results.valorCobrar) }}</p>
+                                    <p class="text-sm font-medium text-gray-600 dark:text-[#a0a0a0] mb-1">Total Pago</p>
+                                    <p class="text-2xl font-black text-blue-600 dark:text-blue-400">{{ formatCurrency(results.valorCobrar) }}</p>
                                 </div>
                                 <div>
-                                    <p class="text-sm text-gray-600">Parcela</p>
-                                    <p class="text-lg font-semibold text-gray-800">{{ installments }}x de {{ formatCurrency(results.valorParcela) }}</p>
+                                    <p class="text-sm font-medium text-gray-600 dark:text-[#a0a0a0] mb-1">Parcela</p>
+                                    <p class="text-lg font-bold text-gray-800 dark:text-white">{{ installments }}x de {{ formatCurrency(results.valorParcela) }}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Custos Máquina -->
-                        <div class="bg-red-50 p-4 rounded-lg border border-red-100">
-                            <h3 class="text-sm font-bold text-red-500 uppercase tracking-wider mb-3">Custos da Máquina ({{ results.machineName }})</h3>
-                            <div class="space-y-2">
+                        <div class="bg-red-50/80 dark:bg-red-900/10 p-5 rounded-[24px] border border-red-100 dark:border-red-500/10 shadow-sm">
+                            <h3 class="text-xs font-black text-red-400 dark:text-red-500 uppercase tracking-widest mb-4">Custos da Máquina</h3>
+                            <div class="space-y-3">
                                 <div class="flex justify-between items-center">
-                                    <p class="text-sm text-gray-700">Intermediação ({{ results.baseRatePercent.toFixed(2) }}%)</p>
-                                    <p class="font-semibold text-red-600">-{{ formatCurrency(results.custoIntermediacao) }}</p>
+                                    <p class="text-sm font-medium text-gray-700 dark:text-[#a0a0a0]">Intermediação ({{ results.baseRatePercent.toFixed(2) }}%)</p>
+                                    <p class="font-bold text-red-600 dark:text-red-400">-{{ formatCurrency(results.custoIntermediacao) }}</p>
                                 </div>
                                 <div v-if="results.fixedFee > 0" class="flex justify-between items-center">
-                                    <p class="text-sm text-gray-700">Taxa Fixa</p>
-                                    <p class="font-semibold text-red-600">-{{ formatCurrency(results.fixedFee) }}</p>
+                                    <p class="text-sm font-medium text-gray-700 dark:text-[#a0a0a0]">Taxa Fixa</p>
+                                    <p class="font-bold text-red-600 dark:text-red-400">-{{ formatCurrency(results.fixedFee) }}</p>
                                 </div>
                                 <div v-if="installments > 1" class="flex justify-between items-center">
-                                    <p class="text-sm text-gray-700">Parcelamento ({{ results.interestPercent.toFixed(2) }}% a.m.)</p>
-                                    <p class="font-semibold text-red-600">-{{ formatCurrency(results.custoParcelamento) }}</p>
+                                    <p class="text-sm font-medium text-gray-700 dark:text-[#a0a0a0]">Parcelamento</p>
+                                    <p class="font-bold text-red-600 dark:text-red-400">-{{ formatCurrency(results.custoParcelamento) }}</p>
                                 </div>
-                                <div class="flex justify-between items-center border-t border-red-200 pt-2 mt-2">
-                                    <p class="text-sm font-bold text-gray-800">Total Descontado</p>
-                                    <p class="font-bold text-red-700">-{{ formatCurrency(results.custoIntermediacao + results.custoParcelamento + results.fixedFee) }}</p>
+                                <div class="flex justify-between items-center border-t border-red-200 dark:border-red-500/20 pt-3 mt-3">
+                                    <p class="text-sm font-black text-gray-800 dark:text-white uppercase tracking-widest">Desconto Total</p>
+                                    <p class="font-black text-red-600 dark:text-red-500">-{{ formatCurrency(results.custoIntermediacao + results.custoParcelamento + results.fixedFee) }}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Seus Ganhos -->
-                        <div :class="[theme.lightBg, 'p-4 rounded-lg border', theme.border]">
-                            <h3 :class="['text-sm font-bold uppercase tracking-wider mb-3', theme.text]">Seus Ganhos e Repasse</h3>
-                            <div class="space-y-2">
+                        <div :class="[theme.lightBg, 'p-6 rounded-[24px] border dark:bg-neon-dim dark:border-neon/20 shadow-sm', theme.border]">
+                            <h3 :class="['text-xs font-black uppercase tracking-widest mb-4 dark:text-neon', theme.text]">O Seu Lucro Real</h3>
+                            <div class="space-y-3">
                                 <div class="flex justify-between items-center">
-                                    <p class="text-sm text-gray-700">Saldo Liberado</p>
-                                    <p class="font-semibold text-gray-800">{{ formatCurrency(results.saldoMaquina) }}</p>
+                                    <p class="text-sm font-medium text-gray-700 dark:text-[#a0a0a0]">Saldo Liberado</p>
+                                    <p class="font-bold text-gray-800 dark:text-white">{{ formatCurrency(results.saldoMaquina) }}</p>
                                 </div>
-                                <div class="flex justify-between items-center">
-                                    <p :class="['text-sm font-bold', theme.textDark]">Lucro Serviço ({{ results.serviceRatePercent.toFixed(2) }}%)</p>
-                                    <p :class="['font-bold', theme.text]">{{ formatCurrency(results.custoServico) }}</p>
+                                <div class="flex justify-between items-center bg-white/60 dark:bg-black/40 p-3 rounded-[16px] my-2 shadow-sm">
+                                    <p :class="['text-sm font-black dark:text-neon', theme.textDark]">Seu Serviço ({{ results.serviceRatePercent.toFixed(2) }}%)</p>
+                                    <p :class="['font-black text-xl dark:text-neon', theme.text]">{{ formatCurrency(results.custoServico) }}</p>
                                 </div>
-                                <div :class="['flex justify-between items-center border-t pt-2 mt-2', theme.borderDark]">
-                                    <p class="text-sm font-bold text-gray-800">Valor Final (Repasse)</p>
-                                    <p class="font-bold text-gray-900 text-xl">{{ formatCurrency(results.valorReceber) }}</p>
+                                <div :class="['flex justify-between items-center border-t pt-4 mt-3 dark:border-neon/20', theme.borderDark]">
+                                    <p class="text-sm font-black text-gray-800 dark:text-white uppercase tracking-widest">Valor Limpo</p>
+                                    <p class="font-black text-gray-900 dark:text-white text-3xl">{{ formatCurrency(results.valorReceber) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -301,33 +386,34 @@
 
             <!-- TAB: HISTÓRICO -->
             <div v-if="isAdmin && activeTab === 'history'" class="animate-fade-in space-y-4">
-                <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                    <h2 class="text-lg font-bold text-gray-800 flex items-center">
-                        <i class="fa-solid fa-clock-rotate-left mr-2 text-gray-500"></i> Histórico de Vendas
+                <div class="flex justify-between items-center bg-white/90 dark:bg-[#0f0f0f] glass-card p-5 rounded-[24px] shadow-sm border border-gray-200 dark:border-white/10">
+                    <h2 class="text-lg font-black text-gray-800 dark:text-white flex items-center">
+                        <i class="fa-solid fa-clock-rotate-left mr-3 text-gray-400"></i> Histórico
                     </h2>
-                    <button v-if="history.length > 0" @click="clearHistory" class="text-red-500 hover:text-red-700 text-sm font-bold flex items-center">
-                        <i class="fa-solid fa-trash mr-1"></i> Limpar
+                    <button v-if="history.length > 0" @click="clearHistory" class="text-red-500 hover:text-red-600 text-xs font-black flex items-center btn-cta bg-red-50 dark:bg-red-900/20 px-4 py-2 rounded-full uppercase tracking-widest border border-transparent dark:border-red-500/20">
+                        <i class="fa-solid fa-trash mr-2"></i> Limpar
                     </button>
                 </div>
 
-                <div v-if="history.length === 0" class="text-center p-8 bg-gray-50 rounded-xl border border-gray-200 text-gray-500">
-                    Nenhuma simulação guardada ainda.
+                <div v-if="history.length === 0" class="text-center p-10 bg-white/50 dark:bg-white/[0.02] glass-card rounded-[32px] border border-gray-200 dark:border-white/5 text-gray-500 dark:text-[#a0a0a0]">
+                    <i class="fa-solid fa-inbox text-5xl mb-4 opacity-30"></i><br>
+                    <p class="font-bold">Nenhuma simulação guardada.</p>
                 </div>
-                <div v-else v-for="item in history" :key="item.id" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-2">
-                    <div class="flex justify-between border-b border-gray-100 pb-2">
-                        <span class="text-xs text-gray-500 font-medium">{{ formatDate(item.date) }} • {{ item.machineName }}</span>
-                        <span :class="['text-xs font-bold px-2 py-0.5 rounded-full', item.mode === 'receber' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700']">
-                            {{ item.mode === 'receber' ? 'Quis Receber' : 'Quis Passar' }}
+                <div v-else v-for="item in history" :key="item.id" class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-5 rounded-[24px] shadow-sm border border-gray-200 dark:border-white/10 flex flex-col gap-3 btn-cta cursor-default">
+                    <div class="flex justify-between border-b border-gray-100 dark:border-white/5 pb-3">
+                        <span class="text-xs text-gray-500 dark:text-[#a0a0a0] font-bold uppercase tracking-widest">{{ formatDate(item.date) }} <br><span class="opacity-70">{{ item.machineName }}</span></span>
+                        <span :class="['text-xs font-black px-3 py-1 rounded-full h-fit uppercase tracking-widest border', item.mode === 'receber' ? 'bg-green-100 text-green-700 dark:bg-neon-dim dark:text-neon dark:border-neon/20' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-500/20']">
+                            {{ item.mode === 'receber' ? 'Receber' : 'Passar' }}
                         </span>
                     </div>
-                    <div class="flex justify-between items-center mt-1">
+                    <div class="flex justify-between items-end mt-1">
                         <div>
-                            <p class="text-xs text-gray-500">Valor Cobrado</p>
-                            <p class="font-bold text-gray-800">{{ formatCurrency(item.valorCobrar) }} <span class="text-xs font-normal text-gray-500">({{ item.installments }}x)</span></p>
+                            <p class="text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-1">Cobrado ({{ item.installments }}x)</p>
+                            <p class="font-black text-gray-800 dark:text-white text-xl">{{ formatCurrency(item.valorCobrar) }}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-xs text-gray-500">Seu Lucro</p>
-                            <p :class="['font-bold', theme.text]">{{ formatCurrency(item.custoServico) }}</p>
+                            <p class="text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-1">Seu Lucro</p>
+                            <p :class="['font-black text-2xl dark:text-neon', theme.text]">{{ formatCurrency(item.custoServico) }}</p>
                         </div>
                     </div>
                 </div>
@@ -337,48 +423,49 @@
             <div v-if="isAdmin && activeTab === 'settings'" class="animate-fade-in space-y-6">
                 
                 <!-- Edição de Máquina Específica -->
-                <div v-if="editingMachineId" class="animate-fade-in space-y-6">
+                <div v-if="editingMachineId" class="animate-fade-in space-y-5">
                     <div class="flex items-center justify-between mb-4">
-                        <button @click="editingMachineId = null" class="text-gray-500 hover:text-gray-800 font-bold text-sm">
-                            <i class="fa-solid fa-arrow-left mr-1"></i> Voltar
+                        <button @click="editingMachineId = null" class="text-gray-500 dark:text-white hover:text-gray-800 font-bold text-sm bg-white/90 dark:bg-[#0f0f0f] glass-card px-5 py-3 rounded-full btn-cta shadow-sm border border-gray-200 dark:border-white/10">
+                            <i class="fa-solid fa-arrow-left mr-2"></i> Voltar
                         </button>
-                        <h2 class="text-lg font-bold text-gray-800">{{ editingMachineId === 'new' ? 'Nova Máquina' : 'Editar Máquina' }}</h2>
+                        <h2 class="text-xl font-black text-gray-800 dark:text-white">{{ editingMachineId === 'new' ? 'Nova Máquina' : 'Editar Máquina' }}</h2>
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
+                    <div class="bg-white/90 dark:bg-[#0f0f0f] glass-card rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 p-6 space-y-5">
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Nome da Máquina</label>
-                            <input type="text" v-model="tempMachine.name" class="w-full border-gray-300 rounded-lg border-2 p-3 focus:border-blue-500 focus:ring-blue-500" />
+                            <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-2">Nome da Máquina</label>
+                            <input type="text" v-model="tempMachine.name" class="w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 text-gray-800 dark:text-white rounded-[20px] border p-4 outline-none focus:border-blue-500 dark:focus:border-neon transition-colors font-bold shadow-sm" />
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">Juros Mensal (%)</label>
-                                <input type="number" step="0.01" v-model.number="tempMachine.monthlyInterest" class="w-full border-gray-300 rounded-lg border-2 p-3" />
+                                <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-2">Juros/Mês (%)</label>
+                                <input type="number" step="0.01" v-model.number="tempMachine.monthlyInterest" class="w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 text-gray-800 dark:text-white rounded-[20px] border p-4 outline-none focus:border-blue-500 dark:focus:border-neon transition-colors font-bold shadow-sm" />
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">Taxa Fixa (R$)</label>
-                                <input type="number" step="0.01" v-model.number="tempMachine.fixedFee" class="w-full border-gray-300 rounded-lg border-2 p-3" />
+                                <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-2">Taxa Fixa (R$)</label>
+                                <input type="number" step="0.01" v-model.number="tempMachine.fixedFee" class="w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 text-gray-800 dark:text-white rounded-[20px] border p-4 outline-none focus:border-blue-500 dark:focus:border-neon transition-colors font-bold shadow-sm" />
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="p-4 bg-gray-50 border-b border-gray-200">
-                            <h3 class="font-bold text-gray-800">Taxas de Intermediação Base (%)</h3>
+                    <div class="bg-white/90 dark:bg-[#0f0f0f] glass-card rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 overflow-hidden">
+                        <div class="p-5 bg-gray-50/80 dark:bg-white/[0.02] border-b border-gray-200 dark:border-white/5">
+                            <h3 class="font-black text-gray-800 dark:text-white text-center tracking-tight">Taxas de Intermediação Base (%)</h3>
+                            <p class="text-xs text-center text-gray-500 mt-1">Defina 0 para esconder a parcela na Simulação.</p>
                         </div>
-                        <div class="grid grid-cols-3 sm:grid-cols-6 gap-px bg-gray-200">
-                            <div v-for="i in 18" :key="i" class="bg-white p-3 flex flex-col justify-center items-center">
-                                <label class="text-xs font-semibold text-gray-600 mb-1 text-center">{{ i }}x</label>
-                                <input type="number" step="0.01" v-model.number="tempMachine.rates[i]" class="block w-full border-gray-300 rounded-md border text-sm p-2 text-center" />
+                        <div class="grid grid-cols-3 sm:grid-cols-6 gap-px bg-gray-200 dark:bg-white/5">
+                            <div v-for="i in 18" :key="i" class="bg-white/90 dark:bg-[#0f0f0f] p-4 flex flex-col justify-center items-center">
+                                <label class="text-xs font-black text-gray-500 dark:text-[#a0a0a0] mb-2 text-center">{{ i }}x</label>
+                                <input type="number" step="0.01" v-model.number="tempMachine.rates[i]" class="block w-full bg-gray-50 dark:bg-black/50 border-gray-200 dark:border-white/10 text-gray-800 dark:text-white rounded-xl border p-2 text-center font-bold outline-none focus:border-blue-500 dark:focus:border-neon transition-colors shadow-sm" />
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex gap-3">
-                        <button v-if="editingMachineId !== 'new'" @click="deleteMachine" class="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-3 rounded-xl transition-colors">
+                    <div class="flex gap-3 mt-4">
+                        <button v-if="editingMachineId !== 'new'" @click="deleteMachine" class="flex-1 bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-700 dark:text-red-400 font-extrabold py-4 rounded-[24px] transition-colors btn-cta border border-transparent dark:border-red-500/20 shadow-sm">
                             Excluir
                         </button>
-                        <button @click="saveMachine" class="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-colors shadow-lg">
+                        <button @click="saveMachine" class="flex-[2] bg-blue-600 dark:bg-neon dark:text-black hover:bg-blue-700 text-white font-extrabold py-4 rounded-[24px] transition-colors shadow-[0_10px_30px_rgba(0,255,136,0.3)] btn-cta">
                             Guardar Máquina
                         </button>
                     </div>
@@ -386,77 +473,77 @@
 
                 <!-- Menu Geral de Definições -->
                 <div v-else class="animate-fade-in space-y-6">
-                    <div class="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm overflow-x-auto no-scrollbar mb-4">
-                        <button @click="settingsSubTab = 'machines'" :class="['flex-1 py-2 px-3 text-xs font-bold rounded-md whitespace-nowrap transition-all', settingsSubTab === 'machines' ? 'bg-gray-100 text-gray-800' : 'text-gray-500 hover:bg-gray-50']">Máquinas</button>
-                        <button @click="settingsSubTab = 'service'" :class="['flex-1 py-2 px-3 text-xs font-bold rounded-md whitespace-nowrap transition-all', settingsSubTab === 'service' ? 'bg-gray-100 text-gray-800' : 'text-gray-500 hover:bg-gray-50']">Seu Lucro</button>
-                        <button @click="settingsSubTab = 'brand'" :class="['flex-1 py-2 px-3 text-xs font-bold rounded-md whitespace-nowrap transition-all', settingsSubTab === 'brand' ? 'bg-gray-100 text-gray-800' : 'text-gray-500 hover:bg-gray-50']">Personalizar</button>
+                    <div class="flex bg-white/90 dark:bg-[#0f0f0f] glass-card rounded-[24px] p-2 border border-gray-200 dark:border-white/10 shadow-sm overflow-x-auto no-scrollbar mb-6">
+                        <button @click="settingsSubTab = 'machines'" :class="['flex-1 py-3 px-3 text-xs font-extrabold uppercase tracking-widest rounded-[18px] whitespace-nowrap transition-all btn-cta', settingsSubTab === 'machines' ? 'bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-white' : 'text-gray-500 dark:text-[#a0a0a0] hover:bg-gray-50 dark:hover:bg-white/5']">Máquinas</button>
+                        <button @click="settingsSubTab = 'service'" :class="['flex-1 py-3 px-3 text-xs font-extrabold uppercase tracking-widest rounded-[18px] whitespace-nowrap transition-all btn-cta', settingsSubTab === 'service' ? 'bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-white' : 'text-gray-500 dark:text-[#a0a0a0] hover:bg-gray-50 dark:hover:bg-white/5']">Lucro</button>
+                        <button @click="settingsSubTab = 'brand'" :class="['flex-1 py-3 px-3 text-xs font-extrabold uppercase tracking-widest rounded-[18px] whitespace-nowrap transition-all btn-cta', settingsSubTab === 'brand' ? 'bg-gray-100 dark:bg-white/10 text-gray-800 dark:text-white' : 'text-gray-500 dark:text-[#a0a0a0] hover:bg-gray-50 dark:hover:bg-white/5']">Sistema</button>
                     </div>
 
                     <!-- Sub Tab: Máquinas -->
                     <div v-if="settingsSubTab === 'machines'" class="space-y-4">
-                        <div v-for="m in machines" :key="m.id" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
+                        <div v-for="m in machines" :key="m.id" class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-5 rounded-[24px] shadow-sm border border-gray-200 dark:border-white/10 flex justify-between items-center btn-cta" @click="startEditingMachine(m)">
                             <div>
-                                <p class="font-bold text-gray-800">{{ m.name }}</p>
-                                <p class="text-xs text-gray-500">Juros: {{ m.monthlyInterest }}% a.m | Fixa: R$ {{ m.fixedFee }}</p>
+                                <p class="font-black text-gray-800 dark:text-white text-lg tracking-tight">{{ m.name }}</p>
+                                <p class="text-xs font-bold text-gray-500 dark:text-[#a0a0a0] mt-1.5 uppercase tracking-widest"><i class="fa-solid fa-percent mr-1 opacity-50"></i> {{ m.monthlyInterest }}% <span class="mx-2 opacity-30">|</span> <i class="fa-solid fa-tag mr-1 opacity-50"></i> R$ {{ m.fixedFee }}</p>
                             </div>
-                            <button @click="startEditingMachine(m)" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                            <div class="w-12 h-12 rounded-[16px] bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-white flex items-center justify-center border border-gray-200 dark:border-white/10 shadow-sm">
                                 <i class="fa-solid fa-pen"></i>
-                            </button>
+                            </div>
                         </div>
-                        <button @click="startCreatingMachine" class="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-bold hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center">
-                            <i class="fa-solid fa-plus mr-2"></i> Adicionar Máquina
+                        <button @click="startCreatingMachine" class="w-full py-6 border-2 border-dashed border-gray-300 dark:border-white/20 rounded-[24px] text-gray-500 dark:text-white/50 font-black hover:bg-white/50 dark:hover:bg-white/5 transition-colors flex items-center justify-center btn-cta mt-4 uppercase tracking-widest text-sm">
+                            <i class="fa-solid fa-plus mr-3 text-lg"></i> Adicionar
                         </button>
                     </div>
 
                     <!-- Sub Tab: Serviço -->
-                    <div v-if="settingsSubTab === 'service'" :class="[theme.lightBg, 'rounded-xl shadow-sm border', theme.border, 'overflow-hidden p-5']">
-                        <label :class="['block text-sm font-bold mb-2', theme.textDark]">Sua Taxa de Serviço (%)</label>
-                        <p :class="['text-xs mb-4', theme.text]">Sua comissão, embutida no valor final.</p>
-                        <div class="relative mb-6">
-                            <input type="number" step="0.01" v-model.number="tempSettings.serviceRate" :class="['block w-full border-gray-300 rounded-lg border-2 p-3 pr-8 bg-white', theme.ring, theme.focus]" />
-                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none"><span class="text-gray-500 font-bold">%</span></div>
+                    <div v-if="settingsSubTab === 'service'" :class="[theme.lightBg, 'rounded-[32px] shadow-lg border dark:bg-[#0f0f0f] glass-card dark:border-white/10 overflow-hidden p-8']">
+                        <label :class="['block text-xs font-black uppercase tracking-widest mb-3 dark:text-white', theme.textDark]">Sua Taxa de Serviço (%)</label>
+                        <p :class="['text-sm font-medium mb-6 dark:text-[#a0a0a0]', theme.text]">Esta percentagem representa a sua comissão líquida embutida no valor final.</p>
+                        <div class="relative mb-8">
+                            <input type="number" step="0.01" v-model.number="tempSettings.serviceRate" :class="['block w-full bg-white dark:bg-black/50 border-gray-300 dark:border-white/10 text-gray-800 dark:text-white rounded-[24px] border-2 p-5 pr-10 text-3xl font-black outline-none transition-colors shadow-sm', theme.ring, theme.focus, 'dark:focus:border-neon']" />
+                            <div class="absolute inset-y-0 right-0 pr-6 flex items-center pointer-events-none"><span class="text-gray-400 dark:text-[#a0a0a0] font-black text-2xl">%</span></div>
                         </div>
-                        <button @click="saveGlobalSettings" :class="['w-full text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-colors', theme.bg]">
+                        <button @click="saveGlobalSettings" :class="['w-full text-white font-extrabold py-5 px-4 rounded-[24px] shadow-lg transition-colors btn-cta dark:bg-neon dark:text-black dark:shadow-[0_10px_30px_rgba(0,255,136,0.3)]', theme.bg]">
                             Guardar Taxa
                         </button>
                     </div>
 
-                    <!-- Sub Tab: Marca -->
-                    <div v-if="settingsSubTab === 'brand'" class="space-y-4">
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
-                            <h3 class="font-bold text-gray-800 flex items-center border-b pb-2 mb-2"><i class="fa-solid fa-palette mr-2"></i> Aparência</h3>
+                    <!-- Sub Tab: Marca & Sistema -->
+                    <div v-if="settingsSubTab === 'brand'" class="space-y-5">
+                        <div class="bg-white/90 dark:bg-[#0f0f0f] glass-card rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 p-7 space-y-6">
+                            <h3 class="font-black text-gray-800 dark:text-white flex items-center border-b border-gray-100 dark:border-white/10 pb-4 mb-4 text-lg"><i class="fa-solid fa-palette mr-3 text-gray-400 dark:text-neon"></i> Interface</h3>
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">Nome da Aplicação</label>
-                                <input type="text" v-model="tempSettings.appName" class="w-full border-gray-300 rounded-lg border-2 p-3" />
+                                <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">Nome da Aplicação</label>
+                                <input type="text" v-model="tempSettings.appName" class="w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 text-gray-800 dark:text-white rounded-[20px] border p-4 font-bold outline-none focus:border-blue-500 dark:focus:border-neon transition-colors shadow-sm" />
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-2">Cor Principal</label>
-                                <div class="flex gap-2">
+                                <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-4">Cor Principal</label>
+                                <div class="flex flex-wrap gap-4">
                                     <button 
                                         v-for="(themeData, key) in themeOptions" :key="key"
                                         @click="tempSettings.theme = key"
-                                        :class="['w-10 h-10 rounded-full border-4 transition-all', themeData.classes.bg, tempSettings.theme === key ? 'border-gray-800 scale-110 shadow-md' : 'border-transparent opacity-80 hover:opacity-100']"
+                                        :class="['w-14 h-14 rounded-full border-4 transition-all btn-cta', themeData.classes.bg, tempSettings.theme === key ? 'border-gray-800 dark:border-white scale-110 shadow-xl' : 'border-transparent opacity-50 hover:opacity-100']"
                                         :title="themeData.name"
                                     ></button>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
-                            <h3 class="font-bold text-gray-800 flex items-center border-b pb-2 mb-2"><i class="fa-solid fa-key mr-2"></i> Segurança</h3>
+                        <div class="bg-white/90 dark:bg-[#0f0f0f] glass-card rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 p-7 space-y-5">
+                            <h3 class="font-black text-gray-800 dark:text-white flex items-center border-b border-gray-100 dark:border-white/10 pb-4 mb-4 text-lg"><i class="fa-solid fa-shield-halved mr-3 text-gray-400 dark:text-neon"></i> Segurança</h3>
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">Palavra-passe do Admin</label>
-                                <input type="text" v-model="tempSettings.password" class="w-full border-gray-300 rounded-lg border-2 p-3 tracking-widest font-mono text-center" />
+                                <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">Palavra-passe de Administração</label>
+                                <input type="text" v-model="tempSettings.password" class="w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 text-gray-800 dark:text-white rounded-[20px] border p-4 tracking-[0.5em] font-mono text-center text-xl font-black outline-none focus:border-blue-500 dark:focus:border-neon transition-colors shadow-sm" />
                             </div>
                         </div>
 
-                        <button @click="saveGlobalSettings" :class="['w-full text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-colors', theme.bg]">
+                        <button @click="saveGlobalSettings" :class="['w-full text-white font-extrabold py-5 px-4 rounded-[24px] shadow-lg transition-colors btn-cta mt-4 dark:bg-neon dark:text-black dark:shadow-[0_10px_30px_rgba(0,255,136,0.3)]', theme.bg]">
                             Guardar Definições
                         </button>
                     </div>
 
-                    <!-- Mensagem de Sucesso partilhada nas Definições -->
-                    <div v-if="showSaveSuccess" class="bg-green-100 text-green-800 p-3 rounded-lg text-center text-sm font-bold animate-fade-in">
+                    <!-- Mensagem de Sucesso partilhada -->
+                    <div v-if="showSaveSuccess" class="bg-green-100 dark:bg-neon-dim text-green-800 dark:text-neon p-4 rounded-[20px] text-center text-sm font-bold animate-fade-in border border-green-200 dark:border-neon/20">
                         Configurações guardadas com sucesso!
                     </div>
                 </div>
@@ -464,30 +551,30 @@
         </main>
 
         <!-- Modal de Login -->
-        <div v-if="showLogin" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4 animate-fade-in">
-            <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm">
-                <div :class="['flex items-center justify-center w-12 h-12 rounded-full mx-auto mb-4', theme.lightBg, theme.text]">
-                    <i class="fa-solid fa-lock text-xl"></i>
+        <div v-if="showLogin" class="fixed inset-0 bg-gray-900/60 dark:bg-black/80 backdrop-blur-xl flex items-center justify-center z-[100] px-4 animate-fade-in">
+            <div class="bg-white dark:bg-[#0f0f0f] glass-card p-10 rounded-[40px] shadow-2xl w-full max-w-sm border border-gray-100 dark:border-white/10">
+                <div :class="['flex items-center justify-center w-20 h-20 rounded-full mx-auto mb-6 shadow-inner dark:bg-neon-dim dark:text-neon dark:border dark:border-neon/20', theme.lightBg, theme.text]">
+                    <i class="fa-solid fa-lock text-3xl"></i>
                 </div>
-                <h3 class="text-xl font-bold text-center text-gray-800 mb-2">Acesso Restrito</h3>
-                <p class="text-sm text-center text-gray-500 mb-6">Insira a palavra-passe para gerir o sistema.</p>
+                <h3 class="text-3xl font-black text-center text-gray-800 dark:text-white mb-2 tracking-tight">Acesso Restrito</h3>
+                <p class="text-sm font-medium text-center text-gray-500 dark:text-[#a0a0a0] mb-8">Insira a palavra-passe para gerir.</p>
                 
                 <input
                     type="password"
                     v-model="passwordInput"
                     @keyup.enter="handleLogin"
-                    placeholder="Palavra-passe"
-                    :class="['w-full border-2 p-3 rounded-xl mb-2 text-center text-lg tracking-widest outline-none transition-all', loginError ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500']"
+                    placeholder="••••"
+                    :class="['w-full bg-gray-50 dark:bg-black/50 border-2 p-5 rounded-[24px] mb-4 text-center text-3xl tracking-[0.5em] font-mono outline-none transition-all text-gray-800 dark:text-white shadow-inner', loginError ? 'border-red-400 focus:border-red-500' : 'border-gray-200 dark:border-white/10 focus:border-blue-500 dark:focus:border-neon']"
                     autofocus
                 />
-                <p v-if="loginError" class="text-red-500 text-xs text-center mb-4 font-bold animate-fade-in">Palavra-passe incorreta!</p>
-                <div v-else class="h-4 mb-4"></div>
+                <p v-if="loginError" class="text-red-500 dark:text-red-400 text-sm text-center mb-6 font-bold animate-fade-in"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Palavra-passe incorreta</p>
+                <div v-else class="h-6 mb-6"></div>
                 
-                <div class="flex gap-3">
-                    <button @click="closeLogin" class="flex-1 py-3 text-gray-600 font-bold bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+                <div class="flex gap-4">
+                    <button @click="closeLogin" class="flex-1 py-5 text-gray-600 dark:text-white font-extrabold bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-[20px] transition-colors btn-cta shadow-sm">
                         Cancelar
                     </button>
-                    <button @click="handleLogin" :class="['flex-1 py-3 text-white font-bold rounded-xl transition-colors shadow-lg', theme.bg]">
+                    <button @click="handleLogin" :class="['flex-1 py-5 text-white font-extrabold rounded-[20px] transition-colors shadow-lg btn-cta dark:bg-neon dark:text-black dark:shadow-[0_10px_30px_rgba(0,255,136,0.3)]', theme.bg]">
                         Entrar
                     </button>
                 </div>
@@ -497,7 +584,7 @@
 
     <!-- Script Principal (Lógica do Vue) -->
     <script>
-        const { createApp, ref, computed, onMounted } = Vue;
+        const { createApp, ref, computed, onMounted, watch } = Vue;
 
         const defaultRates = {
             1: 3.15, 2: 2.95, 3: 2.95, 4: 2.95, 5: 2.95, 6: 2.95,
@@ -507,21 +594,23 @@
 
         const initialSettings = {
             appName: 'Simulador de Taxas',
-            theme: 'emerald',
+            theme: 'neon',
             password: '6261',
-            serviceRate: 2.50
+            serviceRate: 2.50,
+            isDarkMode: true
         };
 
         const initialMachines = [
             { id: '1', name: 'Máquina Principal', rates: {...defaultRates}, monthlyInterest: 1.50, fixedFee: 0 }
         ];
 
+        // Temas adaptados para Light / Dark mode
         const themeOptions = {
-            emerald: { name: 'Esmeralda', classes: { bg: 'bg-emerald-600', text: 'text-emerald-600', border: 'border-emerald-200', ring: 'focus:ring-emerald-500', lightBg: 'bg-emerald-50', hover: 'hover:bg-emerald-700', textDark: 'text-emerald-800', borderDark: 'border-emerald-300' }},
-            blue: { name: 'Azul', classes: { bg: 'bg-blue-600', text: 'text-blue-600', border: 'border-blue-200', ring: 'focus:ring-blue-500', lightBg: 'bg-blue-50', hover: 'hover:bg-blue-700', textDark: 'text-blue-800', borderDark: 'border-blue-300' }},
-            purple: { name: 'Roxo', classes: { bg: 'bg-purple-600', text: 'text-purple-600', border: 'border-purple-200', ring: 'focus:ring-purple-500', lightBg: 'bg-purple-50', hover: 'hover:bg-purple-700', textDark: 'text-purple-800', borderDark: 'border-purple-300' }},
-            rose: { name: 'Rosa', classes: { bg: 'bg-rose-600', text: 'text-rose-600', border: 'border-rose-200', ring: 'focus:ring-rose-500', lightBg: 'bg-rose-50', hover: 'hover:bg-rose-700', textDark: 'text-rose-800', borderDark: 'border-rose-300' }},
-            slate: { name: 'Ardósia', classes: { bg: 'bg-slate-600', text: 'text-slate-600', border: 'border-slate-200', ring: 'focus:ring-slate-500', lightBg: 'bg-slate-50', hover: 'hover:bg-slate-700', textDark: 'text-slate-800', borderDark: 'border-slate-300' }},
+            neon: { name: 'Neon (Recomendado)', classes: { bg: 'bg-[#00ff88]', text: 'text-emerald-600 dark:text-[#00ff88]', border: 'border-emerald-200 dark:border-[#00ff88]', ring: 'focus:ring-emerald-500', lightBg: 'bg-emerald-50 dark:bg-[#00ff88]/10', hover: 'hover:bg-emerald-100 dark:hover:bg-[#00ff88]/20', textDark: 'text-emerald-800 dark:text-[#00ff88]', borderDark: 'border-emerald-300 dark:border-[#00ff88]/30' }},
+            blue: { name: 'Azul', classes: { bg: 'bg-blue-600', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800', ring: 'focus:ring-blue-500', lightBg: 'bg-blue-50 dark:bg-blue-900/30', hover: 'hover:bg-blue-100 dark:hover:bg-blue-900/50', textDark: 'text-blue-800 dark:text-blue-300', borderDark: 'border-blue-300 dark:border-blue-700' }},
+            purple: { name: 'Roxo', classes: { bg: 'bg-purple-600', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800', ring: 'focus:ring-purple-500', lightBg: 'bg-purple-50 dark:bg-purple-900/30', hover: 'hover:bg-purple-100 dark:hover:bg-purple-900/50', textDark: 'text-purple-800 dark:text-purple-300', borderDark: 'border-purple-300 dark:border-purple-700' }},
+            rose: { name: 'Rosa', classes: { bg: 'bg-rose-600', text: 'text-rose-600 dark:text-rose-400', border: 'border-rose-200 dark:border-rose-800', ring: 'focus:ring-rose-500', lightBg: 'bg-rose-50 dark:bg-rose-900/30', hover: 'hover:bg-rose-100 dark:hover:bg-rose-900/50', textDark: 'text-rose-800 dark:text-rose-300', borderDark: 'border-rose-300 dark:border-rose-700' }},
+            slate: { name: 'Ardósia', classes: { bg: 'bg-slate-700', text: 'text-slate-700 dark:text-slate-300', border: 'border-slate-300 dark:border-slate-600', ring: 'focus:ring-slate-500', lightBg: 'bg-slate-100 dark:bg-slate-800', hover: 'hover:bg-slate-200 dark:hover:bg-slate-700', textDark: 'text-slate-900 dark:text-white', borderDark: 'border-slate-400 dark:border-slate-500' }},
         };
 
         createApp({
@@ -553,14 +642,84 @@
                 const deferredPrompt = ref(null);
                 const showInstallBtn = ref(false);
 
+                // Lógica de Fundo Dinâmico Dia/Noite com base no Tema selecionado
+                const themeVars = computed(() => {
+                    const isDark = settings.value.isDarkMode;
+                    const t = settings.value.theme;
+                    
+                    let center = '';
+                    let edge = '';
+                    
+                    // Modifica a intensidade e cores baseado no tema e modo (Dia/Noite)
+                    if (isDark) {
+                        edge = '#000000';
+                        if (t === 'neon') center = '#001a0d';
+                        else if (t === 'blue') center = '#000a1a';
+                        else if (t === 'purple') center = '#1a001a';
+                        else if (t === 'rose') center = '#1a0005';
+                        else if (t === 'slate') center = '#0f172a';
+                    } else {
+                        edge = '#e2e8f0'; 
+                        if (t === 'neon') center = '#ecfdf5';
+                        else if (t === 'blue') center = '#eff6ff';
+                        else if (t === 'purple') center = '#faf5ff';
+                        else if (t === 'rose') center = '#fff1f2';
+                        else if (t === 'slate') center = '#f8fafc';
+                    }
+                    
+                    return { '--bg-center': center, '--bg-edge': edge };
+                });
+
+                // Aplica variáveis de CSS no fundo
+                watch(themeVars, (vars) => {
+                    document.body.style.setProperty('--bg-center', vars['--bg-center']);
+                    document.body.style.setProperty('--bg-edge', vars['--bg-edge']);
+                }, { immediate: true });
+
+                const currentGlowColor = computed(() => {
+                    const colors = {
+                        neon: 'rgba(0, 255, 136, 0.15)',
+                        blue: 'rgba(59, 130, 246, 0.15)',
+                        purple: 'rgba(147, 51, 234, 0.15)',
+                        rose: 'rgba(225, 29, 72, 0.15)',
+                        slate: 'rgba(100, 116, 139, 0.15)'
+                    };
+                    return colors[settings.value.theme] || colors.neon;
+                });
+
+                // Aplica a classe dark globalmente
+                const applyThemeMode = (isDark) => {
+                    if (isDark) document.documentElement.classList.add('dark');
+                    else document.documentElement.classList.remove('dark');
+                };
+
+                // Lógica de Parcelas Disponíveis (Esconde as de taxa 0%)
+                const availableInstallments = computed(() => {
+                    const machine = machines.value.find(m => m.id === selectedMachineId.value) || machines.value[0];
+                    const available = [];
+                    for (let i = 1; i <= 18; i++) {
+                        if (Number(machine.rates[i]) !== 0) {
+                            available.push(i);
+                        }
+                    }
+                    return available.length > 0 ? available : [1]; // Fallback de segurança
+                });
+
+                // Se a parcela atual sumir devido à troca de máquina, escolhe a primeira disponível
+                watch(availableInstallments, (newOptions) => {
+                    if (!newOptions.includes(installments.value)) {
+                        installments.value = newOptions[0];
+                    }
+                });
+
                 onMounted(() => {
-                    const savedData = localStorage.getItem('appTaxasDataV3HTML');
+                    const savedData = localStorage.getItem('appTaxasDataPremiumV2');
                     if (savedData) {
                         try {
                             const parsed = JSON.parse(savedData);
                             if (parsed.settings) {
-                                settings.value = parsed.settings;
-                                tempSettings.value = JSON.parse(JSON.stringify(parsed.settings));
+                                settings.value = { ...initialSettings, ...parsed.settings };
+                                tempSettings.value = JSON.parse(JSON.stringify(settings.value));
                             }
                             if (parsed.machines && parsed.machines.length > 0) {
                                 machines.value = parsed.machines;
@@ -570,9 +729,16 @@
                         } catch (e) {
                             console.error('Erro ao ler dados guardados:', e);
                         }
+                    } else {
+                        settings.value.isDarkMode = true;
+                        settings.value.theme = 'neon';
+                        tempSettings.value.isDarkMode = true;
+                        tempSettings.value.theme = 'neon';
+                        saveData();
                     }
 
-                    // Interceptar evento de instalação da PWA
+                    applyThemeMode(settings.value.isDarkMode);
+
                     window.addEventListener('beforeinstallprompt', (e) => {
                         e.preventDefault();
                         deferredPrompt.value = e;
@@ -591,13 +757,30 @@
                     }
                 };
 
+                const toggleDarkMode = () => {
+                    settings.value.isDarkMode = !settings.value.isDarkMode;
+                    tempSettings.value.isDarkMode = settings.value.isDarkMode;
+                    applyThemeMode(settings.value.isDarkMode);
+                    saveData();
+                };
+
+                const cycleTheme = () => {
+                    const keys = Object.keys(themeOptions);
+                    const currentIndex = keys.indexOf(settings.value.theme);
+                    const nextIndex = (currentIndex + 1) % keys.length;
+                    
+                    settings.value.theme = keys[nextIndex];
+                    tempSettings.value.theme = keys[nextIndex];
+                    saveData();
+                };
+
                 const saveData = () => {
                     const data = { settings: settings.value, machines: machines.value, history: history.value };
-                    localStorage.setItem('appTaxasDataV3HTML', JSON.stringify(data));
+                    localStorage.setItem('appTaxasDataPremiumV2', JSON.stringify(data));
                 };
 
                 const theme = computed(() => {
-                    return themeOptions[settings.value.theme]?.classes || themeOptions['emerald'].classes;
+                    return themeOptions[settings.value.theme]?.classes || themeOptions['neon'].classes;
                 });
 
                 const formatCurrency = (value) => {
@@ -743,6 +926,7 @@
 
                 const saveGlobalSettings = () => {
                     settings.value = JSON.parse(JSON.stringify(tempSettings.value));
+                    applyThemeMode(settings.value.isDarkMode);
                     saveData();
                     showSaveSuccess.value = true;
                     setTimeout(() => showSaveSuccess.value = false, 3000);
@@ -753,7 +937,7 @@
                     isAdmin, showLogin, passwordInput, loginError, settingsSubTab, editingMachineId, tempMachine, tempSettings, showSaveSuccess,
                     themeOptions, theme, results, formatCurrency, formatDate, handleLogin, closeLogin, handleLogout, shareToWhatsApp,
                     saveSimulation, clearHistory, startEditingMachine, startCreatingMachine, saveMachine, deleteMachine, saveGlobalSettings,
-                    showInstallBtn, installPWA
+                    showInstallBtn, installPWA, cycleTheme, toggleDarkMode, currentGlowColor, availableInstallments
                 };
             }
         }).mount('#app');
