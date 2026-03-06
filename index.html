@@ -212,18 +212,21 @@
 
             <!-- TAB: CALCULADORA -->
             <div v-show="activeTab === 'calculator'" class="animate-fade-in space-y-6">
-                <!-- Botões de Partilha e Guardar (Admin) -->
-                <div v-if="isAdmin" class="flex gap-3 mb-2 animate-fade-in">
-                    <button @click="saveSimulation" :class="['flex-1 flex items-center justify-center py-4 px-4 glass-card bg-white/90 dark:bg-[#0f0f0f] border rounded-[24px] shadow-sm text-sm font-extrabold transition-colors btn-cta', showSaveSuccess ? 'text-green-600 dark:text-neon border-green-200 dark:border-neon/30 bg-green-50 dark:bg-neon/10' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-white']">
+                
+                <!-- Botão de Guardar (Apenas Admin) -->
+                <div v-if="isAdmin" class="flex gap-3 mb-4 animate-fade-in">
+                    <button @click="saveSimulation" :class="['w-full flex items-center justify-center py-4 px-4 glass-card bg-white/90 dark:bg-[#0f0f0f] border rounded-[24px] shadow-sm text-sm font-extrabold transition-colors btn-cta', showSaveSuccess ? 'text-green-600 dark:text-neon border-green-200 dark:border-neon/30 bg-green-50 dark:bg-neon/10' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-white']">
                         <i :class="showSaveSuccess ? 'fa-solid fa-check mr-2' : 'fa-solid fa-floppy-disk mr-2'"></i>
-                        {{ showSaveSuccess ? 'Guardada!' : 'Guardar' }}
-                    </button>
-                    <button @click="shareToWhatsApp" class="flex-1 flex items-center justify-center py-4 px-4 bg-[#25D366] text-white rounded-[24px] shadow-[0_10px_30px_rgba(37,211,102,0.3)] text-sm font-extrabold transition-colors btn-cta">
-                        <i class="fa-brands fa-whatsapp mr-2 text-xl"></i> Enviar
+                        {{ showSaveSuccess ? 'Simulação Guardada no Histórico!' : 'Guardar Simulação no Histórico' }}
                     </button>
                 </div>
 
-                <!-- Seleção de Máquina -->
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-black text-gray-800 dark:text-white tracking-tight mb-1">Faça a sua simulação</h2>
+                    <p class="text-sm font-medium text-gray-500 dark:text-[#a0a0a0]">Preencha os dados abaixo para ver os valores ao detalhe.</p>
+                </div>
+
+                <!-- Seleção de Máquina (Oculto se houver apenas 1 para simplificar para o cliente) -->
                 <div v-if="machines.length > 1" class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-5 rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 animate-fade-in transition-colors">
                     <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">Selecione a Máquina</label>
                     <select v-model="selectedMachineId" :class="['block w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 rounded-[20px] border p-4 text-gray-800 dark:text-white font-bold outline-none transition-colors shadow-sm', theme.focus, 'dark:focus:border-neon']">
@@ -233,11 +236,13 @@
 
                 <!-- Abas Quero Receber / Quero Passar -->
                 <div class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-2 rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 flex transition-colors">
-                    <button @click="calcMode = 'receber'" :class="['flex-1 py-4 text-sm font-extrabold rounded-[24px] flex items-center justify-center transition-all btn-cta', calcMode === 'receber' ? `${theme.lightBg} ${theme.textDark} border ${theme.border} shadow-sm dark:bg-neon-dim dark:text-neon dark:border-neon/20` : 'text-gray-500 dark:text-[#a0a0a0] border border-transparent']">
-                        <i class="fa-solid fa-dollar-sign mr-2"></i> Quero Receber
+                    <button @click="calcMode = 'receber'" :class="['flex-1 py-4 px-2 text-sm font-extrabold rounded-[24px] flex flex-col items-center justify-center transition-all btn-cta gap-1', calcMode === 'receber' ? `${theme.lightBg} ${theme.textDark} border ${theme.border} shadow-sm dark:bg-neon-dim dark:text-neon dark:border-neon/20` : 'text-gray-500 dark:text-[#a0a0a0] border border-transparent']">
+                        <div class="flex items-center"><i class="fa-solid fa-hand-holding-dollar mr-2"></i> Quero Receber</div>
+                        <span class="text-[10px] font-medium opacity-70 normal-case tracking-normal">O cliente assume a taxa</span>
                     </button>
-                    <button @click="calcMode = 'passar'" :class="['flex-1 py-4 text-sm font-extrabold rounded-[24px] flex items-center justify-center transition-all btn-cta', calcMode === 'passar' ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-500/30' : 'text-gray-500 dark:text-[#a0a0a0] border border-transparent']">
-                        <i class="fa-solid fa-credit-card mr-2"></i> Quero Passar
+                    <button @click="calcMode = 'passar'" :class="['flex-1 py-4 px-2 text-sm font-extrabold rounded-[24px] flex flex-col items-center justify-center transition-all btn-cta gap-1', calcMode === 'passar' ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-500/30' : 'text-gray-500 dark:text-[#a0a0a0] border border-transparent']">
+                        <div class="flex items-center"><i class="fa-solid fa-credit-card mr-2"></i> Quero Passar</div>
+                        <span class="text-[10px] font-medium opacity-70 normal-case tracking-normal">Eu assumo a taxa</span>
                     </button>
                 </div>
 
@@ -245,19 +250,18 @@
                 <div class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-6 rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 space-y-6 transition-colors">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">
-                            {{ calcMode === 'receber' ? 'Valor que deseja receber' : 'Valor da venda' }}
+                            {{ calcMode === 'receber' ? 'Taxa em cima do que recebo' : 'Taxa abaixo do que vou passar' }}
                         </label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                                 <span class="text-gray-400 dark:text-[#a0a0a0] font-bold text-lg">R$</span>
                             </div>
-                            <input type="number" v-model="inputValue" :class="['pl-14 block w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 rounded-[24px] border p-5 text-2xl font-black text-gray-800 dark:text-white transition-colors outline-none shadow-sm', theme.focus, 'dark:focus:border-neon']" placeholder="0.00" step="0.01" />
+                            <input type="number" v-model="inputValue" :class="['pl-14 block w-full bg-transparent border-gray-200 dark:border-white/10 rounded-[24px] border p-5 text-2xl font-black text-gray-800 dark:text-white transition-colors outline-none shadow-sm placeholder-gray-400 dark:placeholder-gray-600', theme.focus, 'dark:focus:border-neon']" placeholder="0,00" step="0.01" />
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">Número de parcelas</label>
-                        <!-- Agora itera apenas pelas parcelas disponíveis (onde a taxa não é 0%) -->
                         <select v-model="installments" :class="['block w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 rounded-[24px] border p-5 text-xl font-bold text-gray-800 dark:text-white transition-colors outline-none shadow-sm', theme.focus, 'dark:focus:border-neon']">
                             <option v-for="i in availableInstallments" :key="i" :value="i" class="dark:bg-gray-900">{{ i }}x {{ i === 1 ? 'à vista' : 'parcelado' }}</option>
                         </select>
@@ -282,7 +286,7 @@
                                 <i class="fa-solid fa-credit-card w-6 h-6 flex items-center justify-center text-blue-600 dark:text-blue-400 text-2xl"></i>
                             </div>
                             <div>
-                                <p class="text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-1">Se cobrar</p>
+                                <p class="text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-1">Se cobrar do cliente</p>
                                 <p class="text-2xl font-black text-gray-800 dark:text-white leading-none tracking-tight">{{ formatCurrency(results.valorCobrar) }}</p>
                                 <p class="text-xs font-bold text-blue-600 dark:text-blue-400 mt-2 bg-blue-50 dark:bg-blue-900/20 inline-block px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800/50">{{ installments }}x de {{ formatCurrency(results.valorParcela) }}</p>
                             </div>
@@ -316,6 +320,13 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Botão Público do WhatsApp (Visível para o Cliente) -->
+                <button v-if="inputValue && inputValue > 0" @click="shareToWhatsApp" class="w-full mt-2 py-5 px-4 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-[32px] shadow-[0_10px_30px_rgba(37,211,102,0.3)] text-lg font-black transition-all btn-cta flex items-center justify-center animate-fade-in">
+                    <i class="fa-brands fa-whatsapp mr-3 text-2xl"></i> Enviar Simulação
+                </button>
+                <p v-if="inputValue && inputValue > 0" class="text-center text-xs text-gray-500 dark:text-[#a0a0a0] mt-3 font-medium">Clique acima para enviar a simulação para o nosso WhatsApp e avançar com o pedido.</p>
+
             </div>
 
             <!-- TAB: DASHBOARD -->
@@ -530,8 +541,13 @@
                         </div>
 
                         <div class="bg-white/90 dark:bg-[#0f0f0f] glass-card rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 p-7 space-y-5">
-                            <h3 class="font-black text-gray-800 dark:text-white flex items-center border-b border-gray-100 dark:border-white/10 pb-4 mb-4 text-lg"><i class="fa-solid fa-shield-halved mr-3 text-gray-400 dark:text-neon"></i> Segurança</h3>
+                            <h3 class="font-black text-gray-800 dark:text-white flex items-center border-b border-gray-100 dark:border-white/10 pb-4 mb-4 text-lg"><i class="fa-solid fa-shield-halved mr-3 text-gray-400 dark:text-neon"></i> Sistema & Segurança</h3>
                             <div>
+                                <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">Seu WhatsApp (Receber Pedidos)</label>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mb-3">Com código de país e área. Ex: 5511999999999</p>
+                                <input type="text" v-model="tempSettings.whatsappNumber" placeholder="55..." class="w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 text-gray-800 dark:text-white rounded-[20px] border p-4 font-mono text-center text-lg font-bold outline-none focus:border-blue-500 dark:focus:border-neon transition-colors shadow-sm" />
+                            </div>
+                            <div class="pt-4 border-t border-gray-100 dark:border-white/5">
                                 <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">Palavra-passe de Administração</label>
                                 <input type="text" v-model="tempSettings.password" class="w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 text-gray-800 dark:text-white rounded-[20px] border p-4 tracking-[0.5em] font-mono text-center text-xl font-black outline-none focus:border-blue-500 dark:focus:border-neon transition-colors shadow-sm" />
                             </div>
@@ -596,8 +612,9 @@
             appName: 'Simulador de Taxas',
             theme: 'neon',
             password: '6261',
-            serviceRate: 2.50,
-            isDarkMode: true
+            serviceRate: 4.5,
+            isDarkMode: true,
+            whatsappNumber: '5599991998153' // Novo campo para o número do WhatsApp
         };
 
         const initialMachines = [
@@ -622,8 +639,8 @@
                 const machines = ref(JSON.parse(JSON.stringify(initialMachines)));
                 const history = ref([]);
                 
-                const inputValue = ref('100.00');
-                const installments = ref(18);
+                const inputValue = ref('');
+                const installments = ref(1);
                 const calcMode = ref('receber');
                 const selectedMachineId = ref('1');
 
@@ -864,8 +881,24 @@
                 };
 
                 const shareToWhatsApp = () => {
-                    const text = `*${settings.value.appName}*\n\nSimulação de Venda:\nValor: ${formatCurrency(parseFloat(inputValue.value))}\nOpção: ${installments.value}x\n\n*Resumo para Pagamento:*\nTotal a pagar: ${formatCurrency(results.value.valorCobrar)}\nParcelamento: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}`;
-                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                    // Formata o número (remove espaços, traços, etc)
+                    const num = settings.value.whatsappNumber ? settings.value.whatsappNumber.replace(/\D/g, '') : '';
+                    
+                    // Constrói uma mensagem amigável da perspetiva do cliente
+                    let text = `*Nova Simulação - ${settings.value.appName}*\n\n`;
+                    text += `Olá! Gostaria de avançar com uma operação:\n\n`;
+                    text += `*Modalidade:* ${calcMode.value === 'receber' ? 'Quero Receber líquido na conta' : 'Quero Passar na máquina'}\n`;
+                    text += `*Valor base:* ${formatCurrency(parseFloat(inputValue.value))}\n`;
+                    text += `*Parcelamento escolhido:* ${installments.value}x\n\n`;
+                    text += `*💳 Resumo da Operação:*\n`;
+                    text += `Valor a ser cobrado do cartão: ${formatCurrency(results.value.valorCobrar)}\n`;
+                    text += `O cliente vai pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
+                    text += `Valor que vou receber livre: ${formatCurrency(results.value.valorReceber)}\n\n`;
+                    text += `Podemos prosseguir?`;
+
+                    // Se tiver número, cria link direto, senão abre a página de partilha geral
+                    const baseUrl = num ? `https://wa.me/${num}` : `https://wa.me/`;
+                    window.open(`${baseUrl}?text=${encodeURIComponent(text)}`, '_blank');
                 };
 
                 const saveSimulation = () => {
