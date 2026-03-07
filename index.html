@@ -139,7 +139,13 @@
         <header class="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl shadow-sm border-b border-gray-200 dark:border-white/10 sticky top-0 z-50 transition-colors relative">
             <div class="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
                 <div class="flex items-center">
-                    <i :class="['fa-solid fa-calculator w-6 h-6 mr-2 text-xl', theme.text]"></i>
+                    <!-- Nova Logo Exclusiva (SVG Dinâmico) -->
+                    <svg :class="['w-8 h-8 mr-3', theme.text]" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="4" y="4" width="12" height="12" rx="4" class="fill-current" fill-opacity="1"/>
+                        <rect x="20" y="4" width="12" height="12" rx="4" class="fill-current" fill-opacity="0.4"/>
+                        <rect x="4" y="20" width="12" height="12" rx="4" class="fill-current" fill-opacity="0.4"/>
+                        <path d="M20 20h12v12H20z" class="fill-current"/>
+                    </svg>
                     <h1 class="text-xl font-extrabold text-gray-800 dark:text-white truncate pr-2 tracking-tight">{{ settings.appName }}</h1>
                 </div>
                 <div class="flex items-center gap-2">
@@ -215,7 +221,8 @@
                 
                 <!-- Botão de Guardar (Apenas Admin) -->
                 <div v-if="isAdmin" class="flex gap-3 mb-4 animate-fade-in">
-                    <button @click="saveSimulation" :class="['w-full flex items-center justify-center py-4 px-4 glass-card bg-white/90 dark:bg-[#0f0f0f] border rounded-[24px] shadow-sm text-sm font-extrabold transition-colors btn-cta', showSaveSuccess ? 'text-green-600 dark:text-neon border-green-200 dark:border-neon/30 bg-green-50 dark:bg-neon/10' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-white']">
+                    <!-- Alterado o @click para abrir o modal de nome do cliente -->
+                    <button @click="openSaveModal" :class="['w-full flex items-center justify-center py-4 px-4 glass-card bg-white/90 dark:bg-[#0f0f0f] border rounded-[24px] shadow-sm text-sm font-extrabold transition-colors btn-cta', showSaveSuccess ? 'text-green-600 dark:text-neon border-green-200 dark:border-neon/30 bg-green-50 dark:bg-neon/10' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-white']">
                         <i :class="showSaveSuccess ? 'fa-solid fa-check mr-2' : 'fa-solid fa-floppy-disk mr-2'"></i>
                         {{ showSaveSuccess ? 'Simulação Guardada no Histórico!' : 'Guardar Simulação no Histórico' }}
                     </button>
@@ -227,22 +234,22 @@
                 </div>
 
                 <!-- Seleção de Máquina (Oculto se houver apenas 1 para simplificar para o cliente) -->
-                <div v-if="machines.length > 1" class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-5 rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 animate-fade-in transition-colors">
+                <div v-if="machines.length > 1" class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-5 rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 animate-fade-in transition-colors mb-6">
                     <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">Selecione a Máquina</label>
                     <select v-model="selectedMachineId" :class="['block w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 rounded-[20px] border p-4 text-gray-800 dark:text-white font-bold outline-none transition-colors shadow-sm', theme.focus, 'dark:focus:border-neon']">
                         <option v-for="m in machines" :key="m.id" :value="m.id" class="dark:bg-gray-900">{{ m.name }}</option>
                     </select>
                 </div>
 
-                <!-- Abas Quero Receber / Quero Passar -->
-                <div class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-2 rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 flex transition-colors">
-                    <button @click="calcMode = 'receber'" :class="['flex-1 py-4 px-2 text-sm font-extrabold rounded-[24px] flex flex-col items-center justify-center transition-all btn-cta gap-1', calcMode === 'receber' ? `${theme.lightBg} ${theme.textDark} border ${theme.border} shadow-sm dark:bg-neon-dim dark:text-neon dark:border-neon/20` : 'text-gray-500 dark:text-[#a0a0a0] border border-transparent']">
-                        <div class="flex items-center"><i class="fa-solid fa-hand-holding-dollar mr-2"></i> Quero Receber</div>
-                        <span class="text-[10px] font-medium opacity-70 normal-case tracking-normal">O cliente assume a taxa</span>
+                <!-- Abas Quero Receber / Quero Passar (Descoladas em Cartões Independentes) -->
+                <div class="grid grid-cols-2 gap-4 transition-colors">
+                    <button @click="calcMode = 'receber'" :class="['py-5 px-3 text-sm font-extrabold rounded-[28px] flex flex-col items-center justify-center transition-all btn-cta gap-2 glass-card border-2', calcMode === 'receber' ? `${theme.lightBg} ${theme.textDark} ${theme.border} shadow-lg dark:bg-neon-dim dark:text-neon dark:border-neon/40` : 'bg-white/60 dark:bg-[#0f0f0f]/60 text-gray-500 dark:text-[#a0a0a0] border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 shadow-sm']">
+                        <div class="flex items-center text-base"><i class="fa-solid fa-hand-holding-dollar mr-2"></i> Receber</div>
+                        <span class="text-[10px] font-bold opacity-80 normal-case tracking-wide">O cliente paga a taxa</span>
                     </button>
-                    <button @click="calcMode = 'passar'" :class="['flex-1 py-4 px-2 text-sm font-extrabold rounded-[24px] flex flex-col items-center justify-center transition-all btn-cta gap-1', calcMode === 'passar' ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-500/30' : 'text-gray-500 dark:text-[#a0a0a0] border border-transparent']">
-                        <div class="flex items-center"><i class="fa-solid fa-credit-card mr-2"></i> Quero Passar</div>
-                        <span class="text-[10px] font-medium opacity-70 normal-case tracking-normal">Eu assumo a taxa</span>
+                    <button @click="calcMode = 'passar'" :class="['py-5 px-3 text-sm font-extrabold rounded-[28px] flex flex-col items-center justify-center transition-all btn-cta gap-2 glass-card border-2', calcMode === 'passar' ? 'bg-blue-50 text-blue-700 border-blue-300 shadow-lg dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-500/40' : 'bg-white/60 dark:bg-[#0f0f0f]/60 text-gray-500 dark:text-[#a0a0a0] border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 shadow-sm']">
+                        <div class="flex items-center text-base"><i class="fa-solid fa-credit-card mr-2"></i> Passar</div>
+                        <span class="text-[10px] font-bold opacity-80 normal-case tracking-wide">Eu assumo a taxa</span>
                     </button>
                 </div>
 
@@ -286,7 +293,7 @@
                                 <i class="fa-solid fa-credit-card w-6 h-6 flex items-center justify-center text-blue-600 dark:text-blue-400 text-2xl"></i>
                             </div>
                             <div>
-                                <p class="text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-1">Se cobrar do cliente</p>
+                                <p class="text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-1">Você Paga</p>
                                 <p class="text-2xl font-black text-gray-800 dark:text-white leading-none tracking-tight">{{ formatCurrency(results.valorCobrar) }}</p>
                                 <p class="text-xs font-bold text-blue-600 dark:text-blue-400 mt-2 bg-blue-50 dark:bg-blue-900/20 inline-block px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800/50">{{ installments }}x de {{ formatCurrency(results.valorParcela) }}</p>
                             </div>
@@ -316,6 +323,14 @@
                                     Parcelamento <span class="font-bold text-gray-800 dark:text-white ml-1">{{ ((installments > 1 ? results.interestPercent : 0) + results.serviceRatePercent).toFixed(2).replace('.', ',') }}%</span><span class="text-xs opacity-70">{{ installments > 1 ? ' ao mês' : '' }}</span>
                                 </p>
                                 <p class="font-black text-gray-900 dark:text-white">{{ formatCurrency(results.custoParcelamento + results.custoServico) }}</p>
+                            </div>
+                            
+                            <!-- Novo Bloco: Valor Total das Taxas -->
+                            <div class="flex justify-between items-center border-t border-gray-200 dark:border-white/10 pt-5 mt-2">
+                                <p class="text-sm font-black text-gray-800 dark:text-white uppercase tracking-widest">
+                                    Total Taxas <span class="font-bold text-gray-500 dark:text-[#a0a0a0] ml-1">{{ results.totalTaxPercent.toFixed(2).replace('.', ',') }}%</span>
+                                </p>
+                                <p :class="['font-black text-xl', theme.text]">{{ formatCurrency(results.totalTaxValue) }}</p>
                             </div>
                         </div>
                     </div>
@@ -412,7 +427,10 @@
                 </div>
                 <div v-else v-for="item in history" :key="item.id" class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-5 rounded-[24px] shadow-sm border border-gray-200 dark:border-white/10 flex flex-col gap-3 btn-cta cursor-default">
                     <div class="flex justify-between border-b border-gray-100 dark:border-white/5 pb-3">
-                        <span class="text-xs text-gray-500 dark:text-[#a0a0a0] font-bold uppercase tracking-widest">{{ formatDate(item.date) }} <br><span class="opacity-70">{{ item.machineName }}</span></span>
+                        <span class="text-xs text-gray-500 dark:text-[#a0a0a0] font-bold uppercase tracking-widest">
+                            <span v-if="item.clientName" class="text-base text-gray-800 dark:text-white font-black capitalize block mb-1">{{ item.clientName }}</span>
+                            {{ formatDate(item.date) }} <span class="opacity-70 mx-1">•</span> <span class="opacity-70">{{ item.machineName }}</span>
+                        </span>
                         <span :class="['text-xs font-black px-3 py-1 rounded-full h-fit uppercase tracking-widest border', item.mode === 'receber' ? 'bg-green-100 text-green-700 dark:bg-neon-dim dark:text-neon dark:border-neon/20' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-500/20']">
                             {{ item.mode === 'receber' ? 'Receber' : 'Passar' }}
                         </span>
@@ -564,6 +582,12 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Rodapé / Footer Adicionado -->
+            <footer class="mt-12 pb-6 text-center text-[10px] font-bold text-gray-400 dark:text-[#a0a0a0]/50 uppercase tracking-widest">
+                <p>2026 todos os direitos reservados</p>
+                <p class="mt-1.5 text-xs font-black dark:text-[#a0a0a0]/70 text-gray-500">Emprestimo card</p>
+            </footer>
         </main>
 
         <!-- Modal de Login -->
@@ -592,6 +616,35 @@
                     </button>
                     <button @click="handleLogin" :class="['flex-1 py-5 text-white font-extrabold rounded-[20px] transition-colors shadow-lg btn-cta dark:bg-neon dark:text-black dark:shadow-[0_10px_30px_rgba(0,255,136,0.3)]', theme.bg]">
                         Entrar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Nome do Cliente (Ao Guardar Simulação) -->
+        <div v-if="showClientNameModal" class="fixed inset-0 bg-gray-900/60 dark:bg-black/80 backdrop-blur-xl flex items-center justify-center z-[100] px-4 animate-fade-in">
+            <div class="bg-white dark:bg-[#0f0f0f] glass-card p-8 rounded-[40px] shadow-2xl w-full max-w-sm border border-gray-100 dark:border-white/10">
+                <div :class="['flex items-center justify-center w-16 h-16 rounded-full mx-auto mb-5 shadow-inner dark:bg-neon-dim dark:text-neon dark:border dark:border-neon/20', theme.lightBg, theme.text]">
+                    <i class="fa-solid fa-user-pen text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-black text-center text-gray-800 dark:text-white mb-2 tracking-tight">Nome do Cliente</h3>
+                <p class="text-sm font-medium text-center text-gray-500 dark:text-[#a0a0a0] mb-6">Identifique de quem é esta simulação.</p>
+                
+                <input
+                    type="text"
+                    v-model="clientNameInput"
+                    @keyup.enter="confirmSaveSimulation"
+                    placeholder="Ex: João Paulo"
+                    :class="['w-full bg-gray-50 dark:bg-black/50 border-2 p-4 rounded-[24px] mb-6 text-center text-lg font-bold outline-none transition-all text-gray-800 dark:text-white shadow-inner border-gray-200 dark:border-white/10 focus:border-blue-500 dark:focus:border-neon']"
+                    autofocus
+                />
+                
+                <div class="flex gap-3">
+                    <button @click="showClientNameModal = false" class="flex-1 py-4 text-gray-600 dark:text-white font-extrabold bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-[20px] transition-colors btn-cta shadow-sm">
+                        Cancelar
+                    </button>
+                    <button @click="confirmSaveSimulation" :class="['flex-[1.5] py-4 text-white font-extrabold rounded-[20px] transition-colors shadow-lg btn-cta dark:bg-neon dark:text-black dark:shadow-[0_10px_30px_rgba(0,255,136,0.3)]', theme.bg]">
+                        <i class="fa-solid fa-save mr-2"></i> Guardar
                     </button>
                 </div>
             </div>
@@ -654,6 +707,10 @@
                 const tempMachine = ref(null);
                 const tempSettings = ref(JSON.parse(JSON.stringify(initialSettings)));
                 const showSaveSuccess = ref(false);
+
+                // Estado para o Modal do Nome do Cliente
+                const showClientNameModal = ref(false);
+                const clientNameInput = ref('');
 
                 // Variáveis para instalação da PWA
                 const deferredPrompt = ref(null);
@@ -856,7 +913,9 @@
                         custoIntermediacao: valorCobrar * baseRateDecimal,
                         custoParcelamento: valorCobrar * installmentFeeDecimal,
                         custoServico, fixedFee, baseRatePercent, interestPercent,
-                        serviceRatePercent: parseFloat(settings.value.serviceRate) || 0
+                        serviceRatePercent: parseFloat(settings.value.serviceRate) || 0,
+                        totalTaxValue: valorCobrar - valorReceber,
+                        totalTaxPercent: valorCobrar > 0 ? ((valorCobrar - valorReceber) / valorCobrar) * 100 : 0
                     };
                 });
 
@@ -884,16 +943,22 @@
                     // Formata o número (remove espaços, traços, etc)
                     const num = settings.value.whatsappNumber ? settings.value.whatsappNumber.replace(/\D/g, '') : '';
                     
-                    // Constrói uma mensagem amigável da perspetiva do cliente
+                    // Define a saudação baseada na hora local
+                    const hour = new Date().getHours();
+                    let greeting = 'boa noite';
+                    if (hour >= 5 && hour < 12) greeting = 'bom dia';
+                    else if (hour >= 12 && hour < 18) greeting = 'boa tarde';
+                    
+                    // Constrói a mensagem formatada conforme o novo modelo
                     let text = `*Nova Simulação - ${settings.value.appName}*\n\n`;
-                    text += `Olá! Gostaria de avançar com uma operação:\n\n`;
-                    text += `*Modalidade:* ${calcMode.value === 'receber' ? 'Quero Receber líquido na conta' : 'Quero Passar na máquina'}\n`;
+                    text += `Olá! ${greeting}, Gostaria de avançar com uma operação:\n\n`;
+                    text += `*Modalidade:* ${calcMode.value === 'receber' ? 'Quero Receber' : 'Quero Passar'}\n`;
                     text += `*Valor base:* ${formatCurrency(parseFloat(inputValue.value))}\n`;
                     text += `*Parcelamento escolhido:* ${installments.value}x\n\n`;
                     text += `*💳 Resumo da Operação:*\n`;
                     text += `Valor a ser cobrado do cartão: ${formatCurrency(results.value.valorCobrar)}\n`;
-                    text += `O cliente vai pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
-                    text += `Valor que vou receber livre: ${formatCurrency(results.value.valorReceber)}\n\n`;
+                    text += `Vou pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
+                    text += `Valor vou receber : ${formatCurrency(results.value.valorReceber)}\n\n`;
                     text += `Podemos prosseguir?`;
 
                     // Se tiver número, cria link direto, senão abre a página de partilha geral
@@ -901,19 +966,28 @@
                     window.open(`${baseUrl}?text=${encodeURIComponent(text)}`, '_blank');
                 };
 
-                const saveSimulation = () => {
+                // Abre o modal pedindo o nome do cliente
+                const openSaveModal = () => {
+                    clientNameInput.value = '';
+                    showClientNameModal.value = true;
+                };
+
+                // Confirma a gravação com o nome do cliente inserido
+                const confirmSaveSimulation = () => {
                     const newRecord = {
                         id: Date.now().toString(),
                         date: new Date().toISOString(),
+                        clientName: clientNameInput.value.trim() || 'Sem Nome',
                         mode: calcMode.value,
                         installments: installments.value,
                         originalValue: parseFloat(inputValue.value),
                         ...results.value
                     };
-                    history.value = [newRecord, ...history.value].slice(0, 50);
+                    history.value = [newRecord, ...history.value].slice(0, 50); // Guarda as últimas 50
                     saveData();
+                    showClientNameModal.value = false;
                     showSaveSuccess.value = true;
-                    setTimeout(() => showSaveSuccess.value = false, 2000);
+                    setTimeout(() => showSaveSuccess.value = false, 2500);
                 };
 
                 const clearHistory = () => {
@@ -969,7 +1043,8 @@
                     activeTab, showDetails, settings, machines, history, inputValue, installments, calcMode, selectedMachineId,
                     isAdmin, showLogin, passwordInput, loginError, settingsSubTab, editingMachineId, tempMachine, tempSettings, showSaveSuccess,
                     themeOptions, theme, results, formatCurrency, formatDate, handleLogin, closeLogin, handleLogout, shareToWhatsApp,
-                    saveSimulation, clearHistory, startEditingMachine, startCreatingMachine, saveMachine, deleteMachine, saveGlobalSettings,
+                    openSaveModal, confirmSaveSimulation, showClientNameModal, clientNameInput,
+                    clearHistory, startEditingMachine, startCreatingMachine, saveMachine, deleteMachine, saveGlobalSettings,
                     showInstallBtn, installPWA, cycleTheme, toggleDarkMode, currentGlowColor, availableInstallments
                 };
             }
