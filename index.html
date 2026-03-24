@@ -952,13 +952,13 @@
                     // Constrói a mensagem formatada conforme o novo modelo
                     let text = `*Nova Simulação - ${settings.value.appName}*\n\n`;
                     text += `Olá! ${greeting}, Gostaria de avançar com uma operação:\n\n`;
-                    text += `*Modalidade:* ${calcMode.value === 'receber' ? 'Quero Receber' : 'Quero Passar'}\n`;
-                    text += `*Valor base:* ${formatCurrency(parseFloat(inputValue.value))}\n`;
-                    text += `*Parcelamento escolhido:* ${installments.value}x\n\n`;
-                    text += `*💳 Resumo da Operação:*\n`;
-                    text += `Valor a ser cobrado do cartão: ${formatCurrency(results.value.valorCobrar)}\n`;
-                    text += `Vou pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
-                    text += `Valor vou receber : ${formatCurrency(results.value.valorReceber)}\n\n`;
+                    text += `*MODALIDADE:* ${calcMode.value === 'receber' ? 'Quero Receber' : 'Quero Passar'}\n`;
+                    text += `* *Valor base:* ${formatCurrency(parseFloat(inputValue.value))}\n`;
+                    text += `* *Parcelamento escolhido:* ${installments.value}x\n\n`;
+                    text += `*RESUMO DA OPERAÇÃO:*\n`;
+                    text += `* Valor a ser cobrado no cartão: ${formatCurrency(results.value.valorCobrar)}\n`;
+                    text += `* Vou pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
+                    text += `* Valor a receber : ${formatCurrency(results.value.valorReceber)}\n\n`;
                     text += `Podemos prosseguir?`;
 
                     // Se tiver número, cria link direto, senão abre a página de partilha geral
