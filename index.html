@@ -131,7 +131,7 @@
                     <button @click="cycleTheme" class="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all rounded-full flex items-center justify-center btn-cta" title="Mudar Cor do Tema">
                         <i class="fa-solid fa-palette"></i>
                     </button>
-                    <button @click="isAdmin ? handleLogout() : (showLogin = true)" class="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all rounded-full flex items-center justify-center btn-cta" :title="isAdmin ? 'Sair do Painel Admin' : 'Acesso Administrativo'">
+                    <button @click="isAdmin ? handleLogout() : (showWelcomeModal = true)" class="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all rounded-full flex items-center justify-center btn-cta" :title="isAdmin ? 'Sair do Painel Admin' : 'Acesso Administrativo'">
                         <i :class="isAdmin ? 'fa-solid fa-right-from-bracket' : 'fa-solid fa-lock'"></i>
                     </button>
                 </div>
@@ -297,7 +297,7 @@
                     </div>
                 </div>
 
-                <!-- Botão Público do WhatsApp (Visível para o Cliente) -->
+                <!-- Botão Público do WhatsApp (Visível para o Cliente e Admin) -->
                 <button v-if="rawValueCents > 0" @click="shareToWhatsApp" class="w-full mt-2 py-5 px-4 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-[32px] shadow-[0_10px_30px_rgba(37,211,102,0.3)] text-lg font-black transition-all btn-cta flex items-center justify-center animate-fade-in">
                     <i class="fa-brands fa-whatsapp mr-3 text-2xl"></i> Enviar Simulação
                 </button>
@@ -548,6 +548,27 @@
             </footer>
         </main>
 
+        <!-- Modal de Boas Vindas (Seleção de Perfil) -->
+        <div v-if="showWelcomeModal" class="fixed inset-0 bg-gray-900/60 dark:bg-black/80 backdrop-blur-xl flex items-center justify-center z-[110] px-4 animate-fade-in no-select">
+            <div class="bg-white dark:bg-[#0f0f0f] glass-card p-8 rounded-[40px] shadow-2xl w-full max-w-sm border border-gray-100 dark:border-white/10 flex flex-col items-center">
+                <div :class="['flex items-center justify-center w-20 h-20 rounded-full mb-6 shadow-inner dark:bg-neon-dim dark:text-neon dark:border dark:border-neon/20', theme.lightBg, theme.text]">
+                    <i class="fa-solid fa-users text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-black text-center text-gray-800 dark:text-white mb-2 tracking-tight">Bem-vindo!</h3>
+                <p class="text-sm font-medium text-center text-gray-500 dark:text-[#a0a0a0] mb-8">Como deseja aceder ao sistema?</p>
+                
+                <div class="flex flex-col gap-4 w-full">
+                    <button @click="selectRole('client')" class="w-full py-5 px-4 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-800 dark:text-white font-extrabold rounded-[24px] transition-colors btn-cta shadow-sm flex items-center justify-center border border-transparent dark:border-white/10">
+                        <i class="fa-solid fa-user mr-3 text-xl opacity-70"></i> Sou Cliente
+                    </button>
+                    
+                    <button @click="selectRole('admin')" :class="['w-full py-5 px-4 text-white font-extrabold rounded-[24px] transition-colors shadow-lg btn-cta flex items-center justify-center dark:bg-neon dark:text-black dark:shadow-[0_10px_30px_rgba(0,255,136,0.3)]', theme.bg]">
+                        <i class="fa-solid fa-lock mr-3 text-xl opacity-90"></i> Sou Administrador
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal de Login COM TECLADO VIRTUAL -->
         <div v-if="showLogin" class="fixed inset-0 bg-gray-900/60 dark:bg-black/80 backdrop-blur-xl flex items-center justify-center z-[100] px-4 animate-fade-in no-select">
             <div class="bg-white dark:bg-[#0f0f0f] glass-card p-8 rounded-[40px] shadow-2xl w-full max-w-sm border border-gray-100 dark:border-white/10 flex flex-col items-center">
@@ -666,6 +687,7 @@
                 const selectedMachineId = ref('1');
 
                 const isAdmin = ref(false);
+                const showWelcomeModal = ref(true); // Novo estado para identificar Cliente/Admin ao abrir
                 const showLogin = ref(false);
                 const passwordInput = ref('');
                 const loginError = ref(false);
@@ -680,6 +702,16 @@
                 const clientNameInput = ref('');
                 const deferredPrompt = ref(null);
                 const showInstallBtn = ref(false);
+
+                // Função acionada ao selecionar uma opção no modal inicial
+                const selectRole = (role) => {
+                    showWelcomeModal.value = false;
+                    if (role === 'admin') {
+                        showLogin.value = true;
+                    } else {
+                        isAdmin.value = false;
+                    }
+                };
 
                 // Formatação em tempo real para o ecrã do valor
                 const displayValue = computed(() => {
@@ -863,28 +895,50 @@
                     showLogin.value = false;
                     passwordInput.value = '';
                     loginError.value = false;
+                    // Se cancelar e ainda não era admin, assegurar que fica como cliente
+                    if (!isAdmin.value) isAdmin.value = false;
                 };
 
                 const handleLogout = () => { isAdmin.value = false; activeTab.value = 'calculator'; };
 
                 const shareToWhatsApp = () => {
-                    const num = settings.value.whatsappNumber ? settings.value.whatsappNumber.replace(/\D/g, '') : '';
                     const hour = new Date().getHours();
                     let greeting = 'boa noite';
                     if (hour >= 5 && hour < 12) greeting = 'bom dia';
                     else if (hour >= 12 && hour < 18) greeting = 'boa tarde';
                     
                     let text = `*SIMULAÇÃO* - ${settings.value.appName}*\n\n`;
-                    text += `Olá! ${greeting}, Gostaria de avançar com uma operação de emprestimo:\n\n`;
-                    text += `*Modalidade:* ${calcMode.value === 'receber' ? 'Quero Receber' : 'Quero Passar'}\n`;
-                    text += `*Valor base:* ${formatCurrency(rawValueCents.value / 100)}\n`;
-                    text += `*Parcelamento:* ${installments.value}x\n\n`;
-                    text += `*RESUMO DA OPERAÇÃO*\n`;
-                    text += `Valor cobrado do cartão: ${formatCurrency(results.value.valorCobrar)}\n`;
-                    text += `Vou pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
-                    text += `Valor vou receber : ${formatCurrency(results.value.valorReceber)}\n\n`;
+                    let linkWhatsapp = '';
 
-                    window.open(`${num ? `https://wa.me/${num}` : `https://wa.me/`}?text=${encodeURIComponent(text)}`, '_blank');
+                    // Separa o texto e o destino dependendo de quem está a enviar
+                    if (isAdmin.value) {
+                        text += `Olá! ${greeting}, Segue a simulação do seu emprestimo:\n\n`;
+                        text += `*Modalidade:* ${calcMode.value === 'receber' ? 'Quero Receber' : 'Quero Passar'}\n`;
+                        text += `*Valor base:* ${formatCurrency(rawValueCents.value / 100)}\n`;
+                        text += `*Parcelamento:* ${installments.value}x\n\n`;
+                        text += `*RESUMO DA OPERAÇÃO*\n`;
+                        text += `Valor cobrado do cartão: ${formatCurrency(results.value.valorCobrar)}\n`;
+                        text += `Você vai pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
+                        text += `Você vai receber : ${formatCurrency(results.value.valorReceber)}\n\n`;
+                        
+                        // Admin não tem número fixo
+                        linkWhatsapp = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                    } else {
+                        text += `Olá! ${greeting}, Gostaria de avançar com uma operação de emprestimo:\n\n`;
+                        text += `*Modalidade:* ${calcMode.value === 'receber' ? 'Quero Receber' : 'Quero Passar'}\n`;
+                        text += `*Valor base:* ${formatCurrency(rawValueCents.value / 100)}\n`;
+                        text += `*Parcelamento:* ${installments.value}x\n\n`;
+                        text += `*RESUMO DA OPERAÇÃO*\n`;
+                        text += `Valor cobrado do cartão: ${formatCurrency(results.value.valorCobrar)}\n`;
+                        text += `Vou pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
+                        text += `Valor vou receber : ${formatCurrency(results.value.valorReceber)}\n\n`;
+                        
+                        // Cliente envia sempre para o número específico
+                        const numeroEspecifico = "5599991998153";
+                        linkWhatsapp = `https://wa.me/${numeroEspecifico}?text=${encodeURIComponent(text)}`;
+                    }
+
+                    window.open(linkWhatsapp, '_blank');
                 };
 
                 const openSaveModal = () => { clientNameInput.value = ''; showClientNameModal.value = true; };
@@ -931,7 +985,7 @@
 
                 return {
                     activeTab, showDetails, settings, machines, history, rawValueCents, showCalculatorNumpad, displayValue, handleNumpad, installments, calcMode, selectedMachineId,
-                    isAdmin, showLogin, passwordInput, loginError, settingsSubTab, editingMachineId, tempMachine, tempSettings, showSaveSuccess,
+                    isAdmin, showWelcomeModal, selectRole, showLogin, passwordInput, loginError, settingsSubTab, editingMachineId, tempMachine, tempSettings, showSaveSuccess,
                     themeOptions, theme, results, formatCurrency, formatDate, handleLogin, closeLogin, handleLogout, shareToWhatsApp,
                     openSaveModal, confirmSaveSimulation, showClientNameModal, clientNameInput,
                     clearHistory, startEditingMachine, startCreatingMachine, saveMachine, deleteMachine, saveGlobalSettings,
