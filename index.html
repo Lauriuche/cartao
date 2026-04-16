@@ -471,10 +471,24 @@
                             A sua comissão é ajustada automaticamente para 38% do CDI de hoje 
                             <span v-if="currentCDI > 0" class="font-bold block sm:inline mt-1 sm:mt-0">(Atual: {{ currentCDI }}%)</span>.
                         </p>
-                        <div class="relative mb-6 sm:mb-8">
+                        
+                        <div :class="['relative mb-4 sm:mb-6 transition-opacity duration-300', tempSettings.noServiceFee ? 'opacity-40 pointer-events-none' : '']">
                             <input type="number" step="0.001" readonly v-model.number="tempSettings.serviceRate" :class="['block w-full bg-gray-100 dark:bg-black/80 border-gray-300 dark:border-white/10 text-gray-500 dark:text-gray-400 rounded-[20px] sm:rounded-[24px] border-2 p-4 sm:p-5 pr-8 sm:pr-10 text-2xl sm:text-3xl font-black outline-none transition-colors shadow-inner cursor-not-allowed']" />
                             <div class="absolute inset-y-0 right-0 pr-4 sm:pr-6 flex items-center pointer-events-none"><span class="text-gray-400 dark:text-[#a0a0a0] font-black text-xl sm:text-2xl">%</span></div>
                         </div>
+
+                        <!-- Toggle Sem Taxa de Serviço -->
+                        <div class="mb-6 sm:mb-8 flex items-center justify-between bg-white/50 dark:bg-black/30 p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] border border-gray-200 dark:border-white/10">
+                            <div>
+                                <p class="text-xs sm:text-sm font-bold text-gray-800 dark:text-white uppercase tracking-widest mb-1">Sem Taxa de Serviço</p>
+                                <p class="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-[#a0a0a0]">Isentar o cliente desta cobrança na simulação.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" v-model="tempSettings.noServiceFee" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-500 dark:peer-checked:bg-neon"></div>
+                            </label>
+                        </div>
+
                         <button @click="saveGlobalSettings" :class="['w-full text-white font-extrabold text-sm sm:text-base py-4 sm:py-5 px-4 rounded-[20px] sm:rounded-[24px] shadow-lg transition-colors btn-cta dark:bg-neon dark:text-black dark:shadow-[0_10px_30px_rgba(0,255,136,0.3)]', theme.bg]">
                             Guardar Definições
                         </button>
@@ -651,7 +665,8 @@
             password: '6261',
             serviceRate: 4,
             isDarkMode: true,
-            whatsappNumber: '' 
+            whatsappNumber: '',
+            noServiceFee: false
         };
 
         const initialMachines = [
@@ -878,7 +893,7 @@
                     if (n > 1 && i > 0) installmentFeeDecimal = 1 - (((1 - Math.pow(1 + i, -n)) / i) / n);
 
                     const totalRateDecimal = baseRateDecimal + installmentFeeDecimal;
-                    const serviceDecimal = (parseFloat(settings.value.serviceRate) || 0) / 100;
+                    const serviceDecimal = settings.value.noServiceFee ? 0 : (parseFloat(settings.value.serviceRate) || 0) / 100;
 
                     let valorCobrar = 0, valorReceber = 0, saldoMaquina = 0, custoServico = 0;
 
