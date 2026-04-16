@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simulador de Taxas</title>
+    <title>EMPRESTIMO NO CARTÃO</title>
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#00ff88">
@@ -56,12 +56,15 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         /* Animações base */
-        .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .animate-fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
+        .animate-slide-down { animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: top; }
+        @keyframes slideDown { from { opacity: 0; transform: scaleY(0.95); } to { opacity: 1; transform: scaleY(1); } }
+
         [v-cloak] { display: none !important; }
 
-        /* Estilos base (Fundo dinâmico Dia/Noite configurado pelo Vue) */
+        /* Estilos base (Fundo dinâmico Dia/Noite) */
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             transition: background 0.5s ease;
@@ -69,11 +72,9 @@
             min-height: 100vh;
         }
 
-        .dark body {
-            color: #ffffff;
-        }
+        .dark body { color: #ffffff; }
 
-        /* Brilho Ambiente presente em ambos os modos */
+        /* Brilho Ambiente */
         .ambient-glow {
             position: fixed;
             width: 80vw;
@@ -88,7 +89,7 @@
             transition: opacity 0.5s ease, background 0.5s ease;
         }
 
-        /* Glassmorphism (Cartões Translúcidos) */
+        /* Glassmorphism */
         .dark .glass-card {
             background: var(--surface-default, rgba(15, 15, 15, 0.85)) !important;
             backdrop-filter: blur(20px);
@@ -97,49 +98,24 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
         }
 
-        /* Botões Premium CTA */
-        .btn-cta {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .btn-cta:hover {
-            transform: translateY(-3px);
-            filter: brightness(1.1);
-        }
-        .btn-cta:active {
-            transform: translateY(-1px) scale(0.98);
-        }
+        /* Botões Premium */
+        .btn-cta { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-cta:hover { filter: brightness(1.1); }
+        .btn-cta:active { transform: scale(0.95); }
         
-        .dark .btn-neon {
-            background: #00ff88 !important;
-            color: #000000 !important;
-            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3) !important;
-            border: none !important;
-        }
-
-        .dark .btn-neon-outline {
-            background: rgba(0, 255, 136, 0.1) !important;
-            color: #00ff88 !important;
-            border: 1px solid rgba(0, 255, 136, 0.2) !important;
-            box-shadow: none !important;
-        }
-
-        /* Input Transitions */
-        input, select, button { transition: background-color 0.3s, border-color 0.3s, color 0.3s; }
-        
-        .dark select option { background-color: #0f0f0f; color: #fff; }
+        /* Evita seleções de texto indesejadas no teclado numérico */
+        .no-select { -webkit-user-select: none; user-select: none; }
     </style>
 </head>
 <body class="transition-colors duration-500 font-sans pb-10" id="main-body">
     
     <div id="app" v-cloak>
-        <!-- Efeito de Brilho Ambiente Dinâmico (Presente em Dia e Noite) -->
         <div class="ambient-glow" :style="{ background: currentGlowColor, opacity: settings.isDarkMode ? 1 : 0.4 }"></div>
 
         <!-- Cabeçalho Principal -->
         <header class="bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-xl shadow-sm border-b border-gray-200 dark:border-white/10 sticky top-0 z-50 transition-colors relative">
             <div class="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
                 <div class="flex items-center">
-                    <!-- Nova Logo Exclusiva (SVG Dinâmico) -->
                     <svg :class="['w-8 h-8 mr-3', theme.text]" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="4" y="4" width="12" height="12" rx="4" class="fill-current" fill-opacity="1"/>
                         <rect x="20" y="4" width="12" height="12" rx="4" class="fill-current" fill-opacity="0.4"/>
@@ -149,30 +125,13 @@
                     <h1 class="text-xl font-extrabold text-gray-800 dark:text-white truncate pr-2 tracking-tight">{{ settings.appName }}</h1>
                 </div>
                 <div class="flex items-center gap-2">
-                    <!-- Botão de Tema (Dia/Noite) -->
-                    <button 
-                        @click="toggleDarkMode"
-                        class="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all rounded-full flex items-center justify-center btn-cta"
-                        title="Alternar Modo Dia/Noite"
-                    >
+                    <button @click="toggleDarkMode" class="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all rounded-full flex items-center justify-center btn-cta" title="Alternar Modo Dia/Noite">
                         <i :class="settings.isDarkMode ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"></i>
                     </button>
-
-                    <!-- Botão de Cor -->
-                    <button 
-                        @click="cycleTheme"
-                        class="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all rounded-full flex items-center justify-center btn-cta"
-                        title="Mudar Cor do Tema"
-                    >
+                    <button @click="cycleTheme" class="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all rounded-full flex items-center justify-center btn-cta" title="Mudar Cor do Tema">
                         <i class="fa-solid fa-palette"></i>
                     </button>
-
-                    <!-- Botão Admin -->
-                    <button 
-                        @click="isAdmin ? handleLogout() : (showLogin = true)"
-                        class="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all rounded-full flex items-center justify-center btn-cta"
-                        :title="isAdmin ? 'Sair do Painel Admin' : 'Acesso Administrativo'"
-                    >
+                    <button @click="isAdmin ? handleLogout() : (showLogin = true)" class="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all rounded-full flex items-center justify-center btn-cta" :title="isAdmin ? 'Sair do Painel Admin' : 'Acesso Administrativo'">
                         <i :class="isAdmin ? 'fa-solid fa-right-from-bracket' : 'fa-solid fa-lock'"></i>
                     </button>
                 </div>
@@ -180,37 +139,23 @@
         </header>
 
         <main class="max-w-md mx-auto px-4 mt-8 relative z-10">
-            <!-- Badge Admin -->
             <div v-if="isAdmin" :class="['dark:bg-neon-dim dark:text-neon dark:border-neon/20 px-5 py-2.5 rounded-full mb-6 flex items-center justify-center text-xs font-extrabold shadow-sm animate-fade-in uppercase tracking-wider', theme.lightBg, theme.textDark, 'border', theme.border]">
                 <i class="fa-solid fa-unlock mr-2"></i> Painel de Administração
             </div>
 
             <!-- Menu Principal de Abas -->
             <div class="flex bg-white/60 dark:bg-black/40 backdrop-blur-xl p-1.5 rounded-[24px] mb-8 overflow-x-auto no-scrollbar shadow-sm border border-white dark:border-white/5 gap-1 transition-colors">
-                <button
-                    @click="activeTab = 'calculator'"
-                    :class="['flex-1 py-3 px-2 text-sm font-bold rounded-[20px] flex items-center justify-center gap-2 transition-all whitespace-nowrap btn-cta', activeTab === 'calculator' ? 'bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']"
-                >
+                <button @click="activeTab = 'calculator'" :class="['flex-1 py-3 px-2 text-sm font-bold rounded-[20px] flex items-center justify-center gap-2 transition-all whitespace-nowrap btn-cta', activeTab === 'calculator' ? 'bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']">
                     <i class="fa-solid fa-calculator hidden sm:block"></i> <span>Simulação</span>
                 </button>
-                
                 <template v-if="isAdmin">
-                    <button
-                        @click="activeTab = 'dashboard'"
-                        :class="['flex-1 py-3 px-2 text-sm font-bold rounded-[20px] flex items-center justify-center gap-2 transition-all whitespace-nowrap btn-cta', activeTab === 'dashboard' ? 'bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']"
-                    >
+                    <button @click="activeTab = 'dashboard'" :class="['flex-1 py-3 px-2 text-sm font-bold rounded-[20px] flex items-center justify-center gap-2 transition-all whitespace-nowrap btn-cta', activeTab === 'dashboard' ? 'bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']">
                         <i class="fa-solid fa-chart-pie hidden sm:block"></i> <span>Dashboard</span>
                     </button>
-                    <button
-                        @click="activeTab = 'history'"
-                        :class="['flex-1 py-3 px-2 text-sm font-bold rounded-[20px] flex items-center justify-center gap-2 transition-all whitespace-nowrap btn-cta', activeTab === 'history' ? 'bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']"
-                    >
+                    <button @click="activeTab = 'history'" :class="['flex-1 py-3 px-2 text-sm font-bold rounded-[20px] flex items-center justify-center gap-2 transition-all whitespace-nowrap btn-cta', activeTab === 'history' ? 'bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']">
                         <i class="fa-solid fa-clock-rotate-left hidden sm:block"></i> <span>Histórico</span>
                     </button>
-                    <button
-                        @click="activeTab = 'settings'"
-                        :class="['flex-1 py-3 px-2 text-sm font-bold rounded-[20px] flex items-center justify-center gap-2 transition-all whitespace-nowrap btn-cta', activeTab === 'settings' ? 'bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']"
-                    >
+                    <button @click="activeTab = 'settings'" :class="['flex-1 py-3 px-2 text-sm font-bold rounded-[20px] flex items-center justify-center gap-2 transition-all whitespace-nowrap btn-cta', activeTab === 'settings' ? 'bg-white dark:bg-white/10 text-gray-800 dark:text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200']">
                         <i class="fa-solid fa-gear hidden sm:block"></i> <span>Definições</span>
                     </button>
                 </template>
@@ -219,12 +164,10 @@
             <!-- TAB: CALCULADORA -->
             <div v-show="activeTab === 'calculator'" class="animate-fade-in space-y-6">
                 
-                <!-- Botão de Guardar (Apenas Admin) -->
                 <div v-if="isAdmin" class="flex gap-3 mb-4 animate-fade-in">
-                    <!-- Alterado o @click para abrir o modal de nome do cliente -->
                     <button @click="openSaveModal" :class="['w-full flex items-center justify-center py-4 px-4 glass-card bg-white/90 dark:bg-[#0f0f0f] border rounded-[24px] shadow-sm text-sm font-extrabold transition-colors btn-cta', showSaveSuccess ? 'text-green-600 dark:text-neon border-green-200 dark:border-neon/30 bg-green-50 dark:bg-neon/10' : 'border-gray-200 dark:border-white/10 text-gray-700 dark:text-white']">
                         <i :class="showSaveSuccess ? 'fa-solid fa-check mr-2' : 'fa-solid fa-floppy-disk mr-2'"></i>
-                        {{ showSaveSuccess ? 'Simulação Guardada no Histórico!' : 'Guardar Simulação no Histórico' }}
+                        {{ showSaveSuccess ? 'Simulação Guardada!' : 'Guardar no Histórico' }}
                     </button>
                 </div>
 
@@ -233,7 +176,6 @@
                     <p class="text-sm font-medium text-gray-500 dark:text-[#a0a0a0]">Preencha os dados abaixo para ver os valores ao detalhe.</p>
                 </div>
 
-                <!-- Seleção de Máquina (Oculto se houver apenas 1 para simplificar para o cliente) -->
                 <div v-if="machines.length > 1" class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-5 rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 animate-fade-in transition-colors mb-6">
                     <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">Selecione a Máquina</label>
                     <select v-model="selectedMachineId" :class="['block w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 rounded-[20px] border p-4 text-gray-800 dark:text-white font-bold outline-none transition-colors shadow-sm', theme.focus, 'dark:focus:border-neon']">
@@ -241,7 +183,6 @@
                     </select>
                 </div>
 
-                <!-- Abas Quero Receber / Quero Passar (Descoladas em Cartões Independentes) -->
                 <div class="grid grid-cols-2 gap-4 transition-colors">
                     <button @click="calcMode = 'receber'" :class="['py-5 px-3 text-sm font-extrabold rounded-[28px] flex flex-col items-center justify-center transition-all btn-cta gap-2 glass-card border-2', calcMode === 'receber' ? `${theme.lightBg} ${theme.textDark} ${theme.border} shadow-lg dark:bg-neon-dim dark:text-neon dark:border-neon/40` : 'bg-white/60 dark:bg-[#0f0f0f]/60 text-gray-500 dark:text-[#a0a0a0] border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 shadow-sm']">
                         <div class="flex items-center text-base"><i class="fa-solid fa-hand-holding-dollar mr-2"></i> Receber</div>
@@ -253,24 +194,46 @@
                     </button>
                 </div>
 
-                <!-- Inputs -->
+                <!-- Painel de Inputs com Teclado Virtual Integrado -->
                 <div class="bg-white/90 dark:bg-[#0f0f0f] glass-card p-6 rounded-[32px] shadow-lg border border-gray-200 dark:border-white/10 space-y-6 transition-colors">
+                    
+                    <!-- Campo de Valor (Aciona o teclado) -->
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">
                             {{ calcMode === 'receber' ? 'Taxa em cima do que recebo' : 'Taxa abaixo do que vou passar' }}
                         </label>
-                        <div class="relative">
+                        <div class="relative cursor-pointer group" @click="showCalculatorNumpad = !showCalculatorNumpad">
                             <div class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                                <span class="text-gray-400 dark:text-[#a0a0a0] font-bold text-lg">R$</span>
+                                <span :class="['font-bold text-lg transition-colors', showCalculatorNumpad ? (settings.isDarkMode ? 'text-neon' : theme.text) : 'text-gray-400 dark:text-[#a0a0a0]']">R$</span>
                             </div>
-                            <input type="number" v-model="inputValue" :class="['pl-14 block w-full bg-transparent border-gray-200 dark:border-white/10 rounded-[24px] border p-5 text-2xl font-black text-gray-800 dark:text-white transition-colors outline-none shadow-sm placeholder-gray-400 dark:placeholder-gray-600', theme.focus, 'dark:focus:border-neon']" placeholder="0,00" step="0.01" />
+                            <!-- Campo falso que imita um input real -->
+                            <div :class="['pl-14 flex items-center w-full bg-white dark:bg-black/50 rounded-[24px] border-2 p-5 text-3xl font-black text-gray-800 dark:text-white transition-all shadow-sm', showCalculatorNumpad ? `border-blue-500 dark:border-neon shadow-md` : 'border-gray-200 dark:border-white/10 group-hover:border-gray-300 dark:group-hover:border-white/20']">
+                                <span v-if="rawValueCents === 0" class="text-gray-300 dark:text-gray-600">0,00</span>
+                                <span v-else>{{ displayValue }}</span>
+                                <span v-show="showCalculatorNumpad" class="ml-1 w-0.5 h-7 bg-blue-500 dark:bg-neon animate-pulse"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TECLADO NUMÉRICO VIRTUAL (Calculadora) -->
+                    <div v-show="showCalculatorNumpad" class="animate-slide-down bg-gray-50/50 dark:bg-black/20 p-3 rounded-[24px] border border-gray-100 dark:border-white/5 no-select">
+                        <div class="grid grid-cols-3 gap-2">
+                            <button v-for="n in [1,2,3,4,5,6,7,8,9]" :key="n" @click="handleNumpad(n)" class="py-4 text-2xl font-black rounded-[16px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white btn-cta hover:bg-gray-50 dark:hover:bg-white/5">{{ n }}</button>
+                            <button @click="handleNumpad('00')" class="py-4 text-xl font-black rounded-[16px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white btn-cta hover:bg-gray-50 dark:hover:bg-white/5">00</button>
+                            <button @click="handleNumpad(0)" class="py-4 text-2xl font-black rounded-[16px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white btn-cta hover:bg-gray-50 dark:hover:bg-white/5">0</button>
+                            <button @click="handleNumpad('back')" class="py-4 text-xl font-bold rounded-[16px] bg-red-50 dark:bg-red-900/20 shadow-sm border border-red-100 dark:border-red-500/20 text-red-500 dark:text-red-400 btn-cta hover:bg-red-100 dark:hover:bg-red-900/40">
+                                <i class="fa-solid fa-delete-left"></i>
+                            </button>
+                            <button @click="showCalculatorNumpad = false" :class="['col-span-3 py-4 mt-1 text-sm font-extrabold uppercase tracking-widest rounded-[16px] text-white btn-cta shadow-md', theme.bg]">
+                                <i class="fa-solid fa-check mr-2"></i> Confirmar
+                            </button>
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-3">Número de parcelas</label>
-                        <select v-model="installments" :class="['block w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 rounded-[24px] border p-5 text-xl font-bold text-gray-800 dark:text-white transition-colors outline-none shadow-sm', theme.focus, 'dark:focus:border-neon']">
-                            <option v-for="i in availableInstallments" :key="i" :value="i" class="dark:bg-gray-900">{{ i }}x {{ i === 1 ? 'à vista' : 'parcelado' }}</option>
+                        <select v-model="installments" :class="['block w-full bg-white dark:bg-black/50 border-gray-200 dark:border-white/10 rounded-[24px] border-2 p-5 text-xl font-bold text-gray-800 dark:text-white transition-colors outline-none shadow-sm', theme.focus, 'dark:focus:border-neon']">
+                            <option v-for="i in availableInstallments" :key="i" :value="i" class="dark:bg-gray-900">{{ i }}x {{ i === 1 ? '' : '' }}</option>
                         </select>
                     </div>
                 </div>
@@ -293,7 +256,7 @@
                                 <i class="fa-solid fa-credit-card w-6 h-6 flex items-center justify-center text-blue-600 dark:text-blue-400 text-2xl"></i>
                             </div>
                             <div>
-                                <p class="text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-1">Você Paga</p>
+                                <p class="text-xs font-bold text-gray-500 dark:text-[#a0a0a0] uppercase tracking-widest mb-1">Se cobrar do cliente</p>
                                 <p class="text-2xl font-black text-gray-800 dark:text-white leading-none tracking-tight">{{ formatCurrency(results.valorCobrar) }}</p>
                                 <p class="text-xs font-bold text-blue-600 dark:text-blue-400 mt-2 bg-blue-50 dark:bg-blue-900/20 inline-block px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-800/50">{{ installments }}x de {{ formatCurrency(results.valorParcela) }}</p>
                             </div>
@@ -312,7 +275,6 @@
                                 <p class="font-bold text-gray-800 dark:text-white">{{ formatCurrency(results.custoIntermediacao) }}</p>
                             </div>
                             
-                            <!-- Taxa Fixa Oculta Dinamicamente se for igual a 0 -->
                             <div v-if="results.fixedFee > 0" class="flex justify-between items-center">
                                 <p class="text-sm font-medium text-gray-600 dark:text-[#a0a0a0]">Fixa por transação</p>
                                 <p class="font-bold text-gray-800 dark:text-white">{{ formatCurrency(results.fixedFee) }}</p>
@@ -324,8 +286,7 @@
                                 </p>
                                 <p class="font-black text-gray-900 dark:text-white">{{ formatCurrency(results.custoParcelamento + results.custoServico) }}</p>
                             </div>
-                            
-                            <!-- Novo Bloco: Valor Total das Taxas -->
+
                             <div class="flex justify-between items-center border-t border-gray-200 dark:border-white/10 pt-5 mt-2">
                                 <p class="text-sm font-black text-gray-800 dark:text-white uppercase tracking-widest">
                                     Total Taxas <span class="font-bold text-gray-500 dark:text-[#a0a0a0] ml-1">{{ results.totalTaxPercent.toFixed(2).replace('.', ',') }}%</span>
@@ -337,14 +298,12 @@
                 </div>
 
                 <!-- Botão Público do WhatsApp (Visível para o Cliente) -->
-                <button v-if="inputValue && inputValue > 0" @click="shareToWhatsApp" class="w-full mt-2 py-5 px-4 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-[32px] shadow-[0_10px_30px_rgba(37,211,102,0.3)] text-lg font-black transition-all btn-cta flex items-center justify-center animate-fade-in">
+                <button v-if="rawValueCents > 0" @click="shareToWhatsApp" class="w-full mt-2 py-5 px-4 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-[32px] shadow-[0_10px_30px_rgba(37,211,102,0.3)] text-lg font-black transition-all btn-cta flex items-center justify-center animate-fade-in">
                     <i class="fa-brands fa-whatsapp mr-3 text-2xl"></i> Enviar Simulação
                 </button>
-                <p v-if="inputValue && inputValue > 0" class="text-center text-xs text-gray-500 dark:text-[#a0a0a0] mt-3 font-medium">Clique acima para enviar a simulação para o nosso WhatsApp e avançar com o pedido.</p>
-
             </div>
 
-            <!-- TAB: DASHBOARD -->
+            <!-- TAB: DASHBOARD (ADMIN) -->
             <div v-if="isAdmin && activeTab === 'dashboard'" class="animate-fade-in space-y-6">
                 <div class="bg-white/95 dark:bg-[#0f0f0f] glass-card rounded-[32px] shadow-xl border border-gray-200 dark:border-white/10 overflow-hidden p-8 transition-colors">
                     <div class="flex items-center mb-8 border-b border-gray-100 dark:border-white/10 pb-5">
@@ -410,7 +369,7 @@
                 </div>
             </div>
 
-            <!-- TAB: HISTÓRICO -->
+            <!-- TAB: HISTÓRICO (ADMIN) -->
             <div v-if="isAdmin && activeTab === 'history'" class="animate-fade-in space-y-4">
                 <div class="flex justify-between items-center bg-white/90 dark:bg-[#0f0f0f] glass-card p-5 rounded-[24px] shadow-sm border border-gray-200 dark:border-white/10">
                     <h2 class="text-lg font-black text-gray-800 dark:text-white flex items-center">
@@ -448,9 +407,8 @@
                 </div>
             </div>
 
-            <!-- TAB: DEFINIÇÕES -->
+            <!-- TAB: DEFINIÇÕES (ADMIN) -->
             <div v-if="isAdmin && activeTab === 'settings'" class="animate-fade-in space-y-6">
-                
                 <!-- Edição de Máquina Específica -->
                 <div v-if="editingMachineId" class="animate-fade-in space-y-5">
                     <div class="flex items-center justify-between mb-4">
@@ -590,31 +548,39 @@
             </footer>
         </main>
 
-        <!-- Modal de Login -->
-        <div v-if="showLogin" class="fixed inset-0 bg-gray-900/60 dark:bg-black/80 backdrop-blur-xl flex items-center justify-center z-[100] px-4 animate-fade-in">
-            <div class="bg-white dark:bg-[#0f0f0f] glass-card p-10 rounded-[40px] shadow-2xl w-full max-w-sm border border-gray-100 dark:border-white/10">
-                <div :class="['flex items-center justify-center w-20 h-20 rounded-full mx-auto mb-6 shadow-inner dark:bg-neon-dim dark:text-neon dark:border dark:border-neon/20', theme.lightBg, theme.text]">
-                    <i class="fa-solid fa-lock text-3xl"></i>
+        <!-- Modal de Login COM TECLADO VIRTUAL -->
+        <div v-if="showLogin" class="fixed inset-0 bg-gray-900/60 dark:bg-black/80 backdrop-blur-xl flex items-center justify-center z-[100] px-4 animate-fade-in no-select">
+            <div class="bg-white dark:bg-[#0f0f0f] glass-card p-8 rounded-[40px] shadow-2xl w-full max-w-sm border border-gray-100 dark:border-white/10 flex flex-col items-center">
+                <div :class="['flex items-center justify-center w-16 h-16 rounded-full mb-4 shadow-inner dark:bg-neon-dim dark:text-neon dark:border dark:border-neon/20', theme.lightBg, theme.text]">
+                    <i class="fa-solid fa-lock text-2xl"></i>
                 </div>
-                <h3 class="text-3xl font-black text-center text-gray-800 dark:text-white mb-2 tracking-tight">Acesso Restrito</h3>
-                <p class="text-sm font-medium text-center text-gray-500 dark:text-[#a0a0a0] mb-8">Insira a palavra-passe para gerir.</p>
+                <h3 class="text-2xl font-black text-center text-gray-800 dark:text-white mb-1 tracking-tight">Acesso Restrito</h3>
+                <p class="text-xs font-bold text-center text-gray-500 dark:text-[#a0a0a0] mb-6 uppercase tracking-widest">Insira a palavra-passe</p>
                 
-                <input
-                    type="password"
-                    v-model="passwordInput"
-                    @keyup.enter="handleLogin"
-                    placeholder="••••"
-                    :class="['w-full bg-gray-50 dark:bg-black/50 border-2 p-5 rounded-[24px] mb-4 text-center text-3xl tracking-[0.5em] font-mono outline-none transition-all text-gray-800 dark:text-white shadow-inner', loginError ? 'border-red-400 focus:border-red-500' : 'border-gray-200 dark:border-white/10 focus:border-blue-500 dark:focus:border-neon']"
-                    autofocus
-                />
-                <p v-if="loginError" class="text-red-500 dark:text-red-400 text-sm text-center mb-6 font-bold animate-fade-in"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Palavra-passe incorreta</p>
-                <div v-else class="h-6 mb-6"></div>
+                <!-- Display da Senha (Oculta nativamente) -->
+                <div :class="['w-full bg-gray-50 dark:bg-black/50 border-2 p-5 rounded-[24px] mb-2 flex items-center justify-center min-h-[72px] transition-all shadow-inner', loginError ? 'border-red-400' : 'border-gray-200 dark:border-white/10']">
+                    <span v-if="passwordInput.length === 0" class="text-gray-400 dark:text-gray-600 font-medium">••••</span>
+                    <span v-else class="text-3xl tracking-[0.5em] font-mono font-black text-gray-800 dark:text-white">{{ '•'.repeat(passwordInput.length) }}</span>
+                </div>
                 
-                <div class="flex gap-4">
-                    <button @click="closeLogin" class="flex-1 py-5 text-gray-600 dark:text-white font-extrabold bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-[20px] transition-colors btn-cta shadow-sm">
+                <p v-if="loginError" class="text-red-500 dark:text-red-400 text-xs text-center mb-4 font-bold animate-fade-in"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Inválido</p>
+                <div v-else class="h-4 mb-4"></div>
+                
+                <!-- Teclado Numérico da Senha -->
+                <div class="grid grid-cols-3 gap-3 w-full mb-6">
+                    <button v-for="n in [1,2,3,4,5,6,7,8,9]" :key="n" @click="passwordInput += n" class="py-4 text-2xl font-black rounded-[20px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white btn-cta hover:bg-gray-50 dark:hover:bg-white/5">{{ n }}</button>
+                    <button @click="passwordInput = ''" class="py-4 text-xl font-bold rounded-[20px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-red-500 dark:text-red-400 btn-cta hover:bg-gray-50 dark:hover:bg-white/5">C</button>
+                    <button @click="passwordInput += '0'" class="py-4 text-2xl font-black rounded-[20px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white btn-cta hover:bg-gray-50 dark:hover:bg-white/5">0</button>
+                    <button @click="passwordInput = passwordInput.slice(0, -1)" class="py-4 text-xl font-bold rounded-[20px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white btn-cta hover:bg-gray-50 dark:hover:bg-white/5">
+                        <i class="fa-solid fa-delete-left"></i>
+                    </button>
+                </div>
+
+                <div class="flex gap-4 w-full">
+                    <button @click="closeLogin" class="flex-1 py-4 text-gray-600 dark:text-white font-extrabold bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-[20px] transition-colors btn-cta shadow-sm">
                         Cancelar
                     </button>
-                    <button @click="handleLogin" :class="['flex-1 py-5 text-white font-extrabold rounded-[20px] transition-colors shadow-lg btn-cta dark:bg-neon dark:text-black dark:shadow-[0_10px_30px_rgba(0,255,136,0.3)]', theme.bg]">
+                    <button @click="handleLogin" :class="['flex-1 py-4 text-white font-extrabold rounded-[20px] transition-colors shadow-lg btn-cta dark:bg-neon dark:text-black dark:shadow-[0_10px_30px_rgba(0,255,136,0.3)]', theme.bg]">
                         Entrar
                     </button>
                 </div>
@@ -662,21 +628,20 @@
         };
 
         const initialSettings = {
-            appName: 'Simulador de Taxas',
+            appName: 'EMPRESTIMO NO CARTÃO',
             theme: 'neon',
             password: '6261',
-            serviceRate: 4.5,
+            serviceRate: 4,
             isDarkMode: true,
-            whatsappNumber: '5599991998153' // Novo campo para o número do WhatsApp
+            whatsappNumber: '' 
         };
 
         const initialMachines = [
             { id: '1', name: 'Máquina Principal', rates: {...defaultRates}, monthlyInterest: 1.50, fixedFee: 0 }
         ];
 
-        // Temas adaptados para Light / Dark mode
         const themeOptions = {
-            neon: { name: 'Neon (Recomendado)', classes: { bg: 'bg-[#00ff88]', text: 'text-emerald-600 dark:text-[#00ff88]', border: 'border-emerald-200 dark:border-[#00ff88]', ring: 'focus:ring-emerald-500', lightBg: 'bg-emerald-50 dark:bg-[#00ff88]/10', hover: 'hover:bg-emerald-100 dark:hover:bg-[#00ff88]/20', textDark: 'text-emerald-800 dark:text-[#00ff88]', borderDark: 'border-emerald-300 dark:border-[#00ff88]/30' }},
+            neon: { name: 'Neon', classes: { bg: 'bg-[#00ff88]', text: 'text-emerald-600 dark:text-[#00ff88]', border: 'border-emerald-200 dark:border-[#00ff88]', ring: 'focus:ring-emerald-500', lightBg: 'bg-emerald-50 dark:bg-[#00ff88]/10', hover: 'hover:bg-emerald-100 dark:hover:bg-[#00ff88]/20', textDark: 'text-emerald-800 dark:text-[#00ff88]', borderDark: 'border-emerald-300 dark:border-[#00ff88]/30' }},
             blue: { name: 'Azul', classes: { bg: 'bg-blue-600', text: 'text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800', ring: 'focus:ring-blue-500', lightBg: 'bg-blue-50 dark:bg-blue-900/30', hover: 'hover:bg-blue-100 dark:hover:bg-blue-900/50', textDark: 'text-blue-800 dark:text-blue-300', borderDark: 'border-blue-300 dark:border-blue-700' }},
             purple: { name: 'Roxo', classes: { bg: 'bg-purple-600', text: 'text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800', ring: 'focus:ring-purple-500', lightBg: 'bg-purple-50 dark:bg-purple-900/30', hover: 'hover:bg-purple-100 dark:hover:bg-purple-900/50', textDark: 'text-purple-800 dark:text-purple-300', borderDark: 'border-purple-300 dark:border-purple-700' }},
             rose: { name: 'Rosa', classes: { bg: 'bg-rose-600', text: 'text-rose-600 dark:text-rose-400', border: 'border-rose-200 dark:border-rose-800', ring: 'focus:ring-rose-500', lightBg: 'bg-rose-50 dark:bg-rose-900/30', hover: 'hover:bg-rose-100 dark:hover:bg-rose-900/50', textDark: 'text-rose-800 dark:text-rose-300', borderDark: 'border-rose-300 dark:border-rose-700' }},
@@ -692,7 +657,10 @@
                 const machines = ref(JSON.parse(JSON.stringify(initialMachines)));
                 const history = ref([]);
                 
-                const inputValue = ref('');
+                // Variáveis do Teclado Virtual (Calculadora)
+                const rawValueCents = ref(0); 
+                const showCalculatorNumpad = ref(false);
+                
                 const installments = ref(1);
                 const calcMode = ref('receber');
                 const selectedMachineId = ref('1');
@@ -708,23 +676,35 @@
                 const tempSettings = ref(JSON.parse(JSON.stringify(initialSettings)));
                 const showSaveSuccess = ref(false);
 
-                // Estado para o Modal do Nome do Cliente
                 const showClientNameModal = ref(false);
                 const clientNameInput = ref('');
-
-                // Variáveis para instalação da PWA
                 const deferredPrompt = ref(null);
                 const showInstallBtn = ref(false);
 
-                // Lógica de Fundo Dinâmico Dia/Noite com base no Tema selecionado
+                // Formatação em tempo real para o ecrã do valor
+                const displayValue = computed(() => {
+                    return (rawValueCents.value / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                });
+
+                // Lógica de manipulação dos toques no Numpad da Calculadora
+                const handleNumpad = (val) => {
+                    if (val === 'back') {
+                        rawValueCents.value = Math.floor(rawValueCents.value / 10);
+                    } else if (val === '00') {
+                        if (rawValueCents.value < 100000000) rawValueCents.value = rawValueCents.value * 100;
+                    } else {
+                        // Limite para evitar números exagerados
+                        if (rawValueCents.value < 100000000) {
+                            rawValueCents.value = (rawValueCents.value * 10) + parseInt(val);
+                        }
+                    }
+                };
+
                 const themeVars = computed(() => {
                     const isDark = settings.value.isDarkMode;
                     const t = settings.value.theme;
-                    
                     let center = '';
                     let edge = '';
-                    
-                    // Modifica a intensidade e cores baseado no tema e modo (Dia/Noite)
                     if (isDark) {
                         edge = '#000000';
                         if (t === 'neon') center = '#001a0d';
@@ -740,54 +720,39 @@
                         else if (t === 'rose') center = '#fff1f2';
                         else if (t === 'slate') center = '#f8fafc';
                     }
-                    
                     return { '--bg-center': center, '--bg-edge': edge };
                 });
 
-                // Aplica variáveis de CSS no fundo
                 watch(themeVars, (vars) => {
                     document.body.style.setProperty('--bg-center', vars['--bg-center']);
                     document.body.style.setProperty('--bg-edge', vars['--bg-edge']);
                 }, { immediate: true });
 
                 const currentGlowColor = computed(() => {
-                    const colors = {
-                        neon: 'rgba(0, 255, 136, 0.15)',
-                        blue: 'rgba(59, 130, 246, 0.15)',
-                        purple: 'rgba(147, 51, 234, 0.15)',
-                        rose: 'rgba(225, 29, 72, 0.15)',
-                        slate: 'rgba(100, 116, 139, 0.15)'
-                    };
+                    const colors = { neon: 'rgba(0, 255, 136, 0.15)', blue: 'rgba(59, 130, 246, 0.15)', purple: 'rgba(147, 51, 234, 0.15)', rose: 'rgba(225, 29, 72, 0.15)', slate: 'rgba(100, 116, 139, 0.15)' };
                     return colors[settings.value.theme] || colors.neon;
                 });
 
-                // Aplica a classe dark globalmente
                 const applyThemeMode = (isDark) => {
                     if (isDark) document.documentElement.classList.add('dark');
                     else document.documentElement.classList.remove('dark');
                 };
 
-                // Lógica de Parcelas Disponíveis (Esconde as de taxa 0%)
                 const availableInstallments = computed(() => {
                     const machine = machines.value.find(m => m.id === selectedMachineId.value) || machines.value[0];
                     const available = [];
                     for (let i = 1; i <= 18; i++) {
-                        if (Number(machine.rates[i]) !== 0) {
-                            available.push(i);
-                        }
+                        if (Number(machine.rates[i]) !== 0) available.push(i);
                     }
-                    return available.length > 0 ? available : [1]; // Fallback de segurança
+                    return available.length > 0 ? available : [1];
                 });
 
-                // Se a parcela atual sumir devido à troca de máquina, escolhe a primeira disponível
                 watch(availableInstallments, (newOptions) => {
-                    if (!newOptions.includes(installments.value)) {
-                        installments.value = newOptions[0];
-                    }
+                    if (!newOptions.includes(installments.value)) installments.value = newOptions[0];
                 });
 
                 onMounted(() => {
-                    const savedData = localStorage.getItem('appTaxasDataPremiumV2');
+                    const savedData = localStorage.getItem('appTaxasDataPremiumV4');
                     if (savedData) {
                         try {
                             const parsed = JSON.parse(savedData);
@@ -800,9 +765,7 @@
                                 selectedMachineId.value = parsed.machines[0].id;
                             }
                             if (parsed.history) history.value = parsed.history;
-                        } catch (e) {
-                            console.error('Erro ao ler dados guardados:', e);
-                        }
+                        } catch (e) { console.error(e); }
                     } else {
                         settings.value.isDarkMode = true;
                         settings.value.theme = 'neon';
@@ -824,9 +787,7 @@
                     if (deferredPrompt.value) {
                         deferredPrompt.value.prompt();
                         const { outcome } = await deferredPrompt.value.userChoice;
-                        if (outcome === 'accepted') {
-                            showInstallBtn.value = false;
-                        }
+                        if (outcome === 'accepted') showInstallBtn.value = false;
                         deferredPrompt.value = null;
                     }
                 };
@@ -840,58 +801,35 @@
 
                 const cycleTheme = () => {
                     const keys = Object.keys(themeOptions);
-                    const currentIndex = keys.indexOf(settings.value.theme);
-                    const nextIndex = (currentIndex + 1) % keys.length;
-                    
+                    const nextIndex = (keys.indexOf(settings.value.theme) + 1) % keys.length;
                     settings.value.theme = keys[nextIndex];
                     tempSettings.value.theme = keys[nextIndex];
                     saveData();
                 };
 
                 const saveData = () => {
-                    const data = { settings: settings.value, machines: machines.value, history: history.value };
-                    localStorage.setItem('appTaxasDataPremiumV2', JSON.stringify(data));
+                    localStorage.setItem('appTaxasDataPremiumV4', JSON.stringify({ settings: settings.value, machines: machines.value, history: history.value }));
                 };
 
-                const theme = computed(() => {
-                    return themeOptions[settings.value.theme]?.classes || themeOptions['neon'].classes;
-                });
-
-                const formatCurrency = (value) => {
-                    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-                };
-
-                const formatDate = (dateString) => {
-                    return new Date(dateString).toLocaleDateString('pt-BR', { 
-                        day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' 
-                    });
-                };
+                const theme = computed(() => themeOptions[settings.value.theme]?.classes || themeOptions['neon'].classes);
+                const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+                const formatDate = (ds) => new Date(ds).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
 
                 const results = computed(() => {
-                    const numericValue = parseFloat(String(inputValue.value).replace(',', '.')) || 0;
+                    const numericValue = rawValueCents.value / 100;
                     const machine = machines.value.find(m => m.id === selectedMachineId.value) || machines.value[0];
-                    
-                    const baseRatePercent = machine.rates[installments.value] || 0;
-                    const baseRateDecimal = baseRatePercent / 100;
-                    
-                    const interestPercent = parseFloat(machine.monthlyInterest) || 0;
-                    const i = interestPercent / 100;
+                    const baseRateDecimal = (machine.rates[installments.value] || 0) / 100;
+                    const i = (parseFloat(machine.monthlyInterest) || 0) / 100;
                     const n = installments.value;
                     const fixedFee = parseFloat(machine.fixedFee) || 0;
                     
                     let installmentFeeDecimal = 0;
-                    if (n > 1 && i > 0) {
-                        const pvFactor = (1 - Math.pow(1 + i, -n)) / i;
-                        installmentFeeDecimal = 1 - (pvFactor / n);
-                    }
+                    if (n > 1 && i > 0) installmentFeeDecimal = 1 - (((1 - Math.pow(1 + i, -n)) / i) / n);
 
                     const totalRateDecimal = baseRateDecimal + installmentFeeDecimal;
-                    const serviceDecimal = parseFloat(settings.value.serviceRate) / 100 || 0;
+                    const serviceDecimal = (parseFloat(settings.value.serviceRate) || 0) / 100;
 
-                    let valorCobrar = 0;
-                    let valorReceber = 0;
-                    let saldoMaquina = 0;
-                    let custoServico = 0;
+                    let valorCobrar = 0, valorReceber = 0, saldoMaquina = 0, custoServico = 0;
 
                     if (calcMode.value === 'receber') {
                         valorReceber = numericValue;
@@ -906,15 +844,10 @@
                     }
 
                     return {
-                        machineName: machine.name,
-                        valorCobrar, valorReceber,
-                        valorParcela: valorCobrar / n,
-                        saldoMaquina,
-                        custoIntermediacao: valorCobrar * baseRateDecimal,
-                        custoParcelamento: valorCobrar * installmentFeeDecimal,
-                        custoServico, fixedFee, baseRatePercent, interestPercent,
-                        serviceRatePercent: parseFloat(settings.value.serviceRate) || 0,
-                        totalTaxValue: valorCobrar - valorReceber,
+                        machineName: machine.name, valorCobrar, valorReceber, valorParcela: valorCobrar / n, saldoMaquina,
+                        custoIntermediacao: valorCobrar * baseRateDecimal, custoParcelamento: valorCobrar * installmentFeeDecimal,
+                        custoServico, fixedFee, baseRatePercent: baseRateDecimal * 100, interestPercent: i * 100,
+                        serviceRatePercent: serviceDecimal * 100, totalTaxValue: valorCobrar - valorReceber,
                         totalTaxPercent: valorCobrar > 0 ? ((valorCobrar - valorReceber) / valorCobrar) * 100 : 0
                     };
                 });
@@ -923,9 +856,7 @@
                     if (passwordInput.value === settings.value.password) {
                         isAdmin.value = true;
                         closeLogin();
-                    } else {
-                        loginError.value = true;
-                    }
+                    } else { loginError.value = true; }
                 };
 
                 const closeLogin = () => {
@@ -934,100 +865,59 @@
                     loginError.value = false;
                 };
 
-                const handleLogout = () => {
-                    isAdmin.value = false;
-                    activeTab.value = 'calculator';
-                };
+                const handleLogout = () => { isAdmin.value = false; activeTab.value = 'calculator'; };
 
                 const shareToWhatsApp = () => {
-                    // Formata o número (remove espaços, traços, etc)
                     const num = settings.value.whatsappNumber ? settings.value.whatsappNumber.replace(/\D/g, '') : '';
-                    
-                    // Define a saudação baseada na hora local
                     const hour = new Date().getHours();
                     let greeting = 'boa noite';
                     if (hour >= 5 && hour < 12) greeting = 'bom dia';
                     else if (hour >= 12 && hour < 18) greeting = 'boa tarde';
                     
-                    // Constrói a mensagem formatada conforme o novo modelo
-                    let text = `*Nova Simulação - ${settings.value.appName}*\n\n`;
-                    text += `Olá! ${greeting}, Gostaria de avançar com uma operação:\n\n`;
-                    text += `*MODALIDADE:* ${calcMode.value === 'receber' ? 'Quero Receber' : 'Quero Passar'}\n`;
-                    text += `* *Valor base:* ${formatCurrency(parseFloat(inputValue.value))}\n`;
-                    text += `* *Parcelamento escolhido:* ${installments.value}x\n\n`;
-                    text += `*RESUMO DA OPERAÇÃO:*\n`;
-                    text += `* Valor a ser cobrado no cartão: ${formatCurrency(results.value.valorCobrar)}\n`;
-                    text += `* Vou pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
-                    text += `* Valor a receber : ${formatCurrency(results.value.valorReceber)}\n\n`;
-                    text += `Podemos prosseguir?`;
+                    let text = `*SIMULAÇÃO* - ${settings.value.appName}*\n\n`;
+                    text += `Olá! ${greeting}, Gostaria de avançar com uma operação de emprestimo:\n\n`;
+                    text += `*Modalidade:* ${calcMode.value === 'receber' ? 'Quero Receber' : 'Quero Passar'}\n`;
+                    text += `*Valor base:* ${formatCurrency(rawValueCents.value / 100)}\n`;
+                    text += `*Parcelamento:* ${installments.value}x\n\n`;
+                    text += `*RESUMO DA OPERAÇÃO*\n`;
+                    text += `Valor cobrado do cartão: ${formatCurrency(results.value.valorCobrar)}\n`;
+                    text += `Vou pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
+                    text += `Valor vou receber : ${formatCurrency(results.value.valorReceber)}\n\n`;
 
-                    // Se tiver número, cria link direto, senão abre a página de partilha geral
-                    const baseUrl = num ? `https://wa.me/${num}` : `https://wa.me/`;
-                    window.open(`${baseUrl}?text=${encodeURIComponent(text)}`, '_blank');
+                    window.open(`${num ? `https://wa.me/${num}` : `https://wa.me/`}?text=${encodeURIComponent(text)}`, '_blank');
                 };
 
-                // Abre o modal pedindo o nome do cliente
-                const openSaveModal = () => {
-                    clientNameInput.value = '';
-                    showClientNameModal.value = true;
-                };
+                const openSaveModal = () => { clientNameInput.value = ''; showClientNameModal.value = true; };
 
-                // Confirma a gravação com o nome do cliente inserido
                 const confirmSaveSimulation = () => {
                     const newRecord = {
-                        id: Date.now().toString(),
-                        date: new Date().toISOString(),
-                        clientName: clientNameInput.value.trim() || 'Sem Nome',
-                        mode: calcMode.value,
-                        installments: installments.value,
-                        originalValue: parseFloat(inputValue.value),
-                        ...results.value
+                        id: Date.now().toString(), date: new Date().toISOString(), clientName: clientNameInput.value.trim() || 'Sem Nome',
+                        mode: calcMode.value, installments: installments.value, originalValue: rawValueCents.value / 100, ...results.value
                     };
-                    history.value = [newRecord, ...history.value].slice(0, 50); // Guarda as últimas 50
+                    history.value = [newRecord, ...history.value].slice(0, 50);
                     saveData();
                     showClientNameModal.value = false;
                     showSaveSuccess.value = true;
                     setTimeout(() => showSaveSuccess.value = false, 2500);
                 };
 
-                const clearHistory = () => {
-                    if(window.confirm("Tem a certeza que deseja limpar todo o histórico?")) {
-                        history.value = [];
-                        saveData();
-                    }
-                };
+                const clearHistory = () => { if(window.confirm("Limpar todo o histórico?")) { history.value = []; saveData(); } };
 
-                const startEditingMachine = (m) => {
-                    tempMachine.value = JSON.parse(JSON.stringify(m));
-                    editingMachineId.value = m.id;
-                };
-
-                const startCreatingMachine = () => {
-                    tempMachine.value = { id: Date.now().toString(), name: 'Nova Máquina', rates: {...defaultRates}, monthlyInterest: 0, fixedFee: 0 };
-                    editingMachineId.value = 'new';
-                };
+                const startEditingMachine = (m) => { tempMachine.value = JSON.parse(JSON.stringify(m)); editingMachineId.value = m.id; };
+                const startCreatingMachine = () => { tempMachine.value = { id: Date.now().toString(), name: 'Nova Máquina', rates: {...defaultRates}, monthlyInterest: 0, fixedFee: 0 }; editingMachineId.value = 'new'; };
 
                 const saveMachine = () => {
-                    if (editingMachineId.value === 'new') {
-                        machines.value.push(tempMachine.value);
-                    } else {
-                        const index = machines.value.findIndex(m => m.id === tempMachine.value.id);
-                        if(index !== -1) machines.value[index] = tempMachine.value;
-                    }
-                    saveData();
-                    editingMachineId.value = null;
+                    if (editingMachineId.value === 'new') machines.value.push(tempMachine.value);
+                    else { const idx = machines.value.findIndex(m => m.id === tempMachine.value.id); if(idx !== -1) machines.value[idx] = tempMachine.value; }
+                    saveData(); editingMachineId.value = null;
                 };
 
                 const deleteMachine = () => {
-                    if(machines.value.length === 1) {
-                        alert("Deve manter pelo menos uma máquina!");
-                        return;
-                    }
+                    if(machines.value.length === 1) return alert("Deve manter pelo menos uma máquina!");
                     if(window.confirm("Remover esta máquina?")) {
                         machines.value = machines.value.filter(m => m.id !== tempMachine.value.id);
                         if (selectedMachineId.value === tempMachine.value.id) selectedMachineId.value = machines.value[0].id;
-                        saveData();
-                        editingMachineId.value = null;
+                        saveData(); editingMachineId.value = null;
                     }
                 };
 
@@ -1040,7 +930,7 @@
                 };
 
                 return {
-                    activeTab, showDetails, settings, machines, history, inputValue, installments, calcMode, selectedMachineId,
+                    activeTab, showDetails, settings, machines, history, rawValueCents, showCalculatorNumpad, displayValue, handleNumpad, installments, calcMode, selectedMachineId,
                     isAdmin, showLogin, passwordInput, loginError, settingsSubTab, editingMachineId, tempMachine, tempSettings, showSaveSuccess,
                     themeOptions, theme, results, formatCurrency, formatDate, handleLogin, closeLogin, handleLogout, shareToWhatsApp,
                     openSaveModal, confirmSaveSimulation, showClientNameModal, clientNameInput,
