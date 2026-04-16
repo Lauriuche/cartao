@@ -554,7 +554,8 @@
                 <div :class="['flex items-center justify-center w-20 h-20 rounded-full mb-6 shadow-inner dark:bg-neon-dim dark:text-neon dark:border dark:border-neon/20', theme.lightBg, theme.text]">
                     <i class="fa-solid fa-users text-3xl"></i>
                 </div>
-                <h3 class="text-2xl font-black text-center text-gray-800 dark:text-white mb-2 tracking-tight">Bem-vindo!</h3>
+                <h3 class="text-2xl font-black text-center text-gray-800 dark:text-white mb-2 tracking-tight">BEM VINDO!</h3>
+                <p class="text-1xl font-black text-center text-gray-800 dark:text-white mb-2 tracking-tight">Ao simulador de emprestimo</p>
                 <p class="text-sm font-medium text-center text-gray-500 dark:text-[#a0a0a0] mb-8">Como deseja aceder ao sistema?</p>
                 
                 <div class="flex flex-col gap-4 w-full">
@@ -907,7 +908,7 @@
                     if (hour >= 5 && hour < 12) greeting = 'bom dia';
                     else if (hour >= 12 && hour < 18) greeting = 'boa tarde';
                     
-                    let text = `*SIMULAÇÃO* - ${settings.value.appName}*\n\n`;
+                    let text = `*SIMULAÇÃO - ${settings.value.appName}*\n\n`;
                     let linkWhatsapp = '';
 
                     // Separa o texto e o destino dependendo de quem está a enviar
@@ -917,9 +918,9 @@
                         text += `*Valor base:* ${formatCurrency(rawValueCents.value / 100)}\n`;
                         text += `*Parcelamento:* ${installments.value}x\n\n`;
                         text += `*RESUMO DA OPERAÇÃO*\n`;
-                        text += `Valor cobrado do cartão: ${formatCurrency(results.value.valorCobrar)}\n`;
-                        text += `Você vai pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
-                        text += `Você vai receber : ${formatCurrency(results.value.valorReceber)}\n\n`;
+                        text += `* Valor cobrado do cartão: ${formatCurrency(results.value.valorCobrar)}\n`;
+                        text += `* Você vai pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
+                        text += `* Você vai receber : ${formatCurrency(results.value.valorReceber)}\n\n`;
                         
                         // Admin não tem número fixo
                         linkWhatsapp = `https://wa.me/?text=${encodeURIComponent(text)}`;
@@ -929,9 +930,9 @@
                         text += `*Valor base:* ${formatCurrency(rawValueCents.value / 100)}\n`;
                         text += `*Parcelamento:* ${installments.value}x\n\n`;
                         text += `*RESUMO DA OPERAÇÃO*\n`;
-                        text += `Valor cobrado do cartão: ${formatCurrency(results.value.valorCobrar)}\n`;
-                        text += `Vou pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
-                        text += `Valor vou receber : ${formatCurrency(results.value.valorReceber)}\n\n`;
+                        text += `* Valor cobrado do cartão: ${formatCurrency(results.value.valorCobrar)}\n`;
+                        text += `* Vou pagar: ${installments.value}x de ${formatCurrency(results.value.valorParcela)}\n`;
+                        text += `* Valor vou receber : ${formatCurrency(results.value.valorReceber)}\n\n`;
                         
                         // Cliente envia sempre para o número específico
                         const numeroEspecifico = "5599991998153";
