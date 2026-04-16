@@ -6,6 +6,9 @@
     <title>EMPRESTIMO NO CARTÃO</title>
     
     <!-- PWA Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta name="Expires" content="0">
     <meta name="theme-color" content="#00ff88">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -484,14 +487,17 @@
 
                     <!-- Sub Tab: Serviço -->
                     <div v-if="settingsSubTab === 'service'" :class="[theme.lightBg, 'rounded-[32px] shadow-lg border dark:bg-[#0f0f0f] glass-card dark:border-white/10 overflow-hidden p-8']">
-                        <label :class="['block text-xs font-black uppercase tracking-widest mb-3 dark:text-white', theme.textDark]">Sua Taxa de Serviço (%)</label>
-                        <p :class="['text-sm font-medium mb-6 dark:text-[#a0a0a0]', theme.text]">Esta percentagem representa a sua comissão líquida embutida no valor final.</p>
+                        <label :class="['block text-xs font-black uppercase tracking-widest mb-3 dark:text-white', theme.textDark]">Sua Taxa de Serviço (38% do CDI)</label>
+                        <p :class="['text-sm font-medium mb-6 dark:text-[#a0a0a0]', theme.text]">
+                            A sua comissão é ajustada automaticamente para 38% do CDI de hoje 
+                            <span v-if="currentCDI > 0" class="font-bold">(Atual: {{ currentCDI }}%)</span>.
+                        </p>
                         <div class="relative mb-8">
-                            <input type="number" step="0.01" v-model.number="tempSettings.serviceRate" :class="['block w-full bg-white dark:bg-black/50 border-gray-300 dark:border-white/10 text-gray-800 dark:text-white rounded-[24px] border-2 p-5 pr-10 text-3xl font-black outline-none transition-colors shadow-sm', theme.ring, theme.focus, 'dark:focus:border-neon']" />
+                            <input type="number" step="0.001" readonly v-model.number="tempSettings.serviceRate" :class="['block w-full bg-gray-100 dark:bg-black/80 border-gray-300 dark:border-white/10 text-gray-500 dark:text-gray-400 rounded-[24px] border-2 p-5 pr-10 text-3xl font-black outline-none transition-colors shadow-inner cursor-not-allowed']" />
                             <div class="absolute inset-y-0 right-0 pr-6 flex items-center pointer-events-none"><span class="text-gray-400 dark:text-[#a0a0a0] font-black text-2xl">%</span></div>
                         </div>
                         <button @click="saveGlobalSettings" :class="['w-full text-white font-extrabold py-5 px-4 rounded-[24px] shadow-lg transition-colors btn-cta dark:bg-neon dark:text-black dark:shadow-[0_10px_30px_rgba(0,255,136,0.3)]', theme.bg]">
-                            Guardar Taxa
+                            Guardar Definições
                         </button>
                     </div>
 
@@ -554,8 +560,8 @@
                 <div :class="['flex items-center justify-center w-20 h-20 rounded-full mb-6 shadow-inner dark:bg-neon-dim dark:text-neon dark:border dark:border-neon/20', theme.lightBg, theme.text]">
                     <i class="fa-solid fa-users text-3xl"></i>
                 </div>
-                <h3 class="text-2xl font-black text-center text-gray-800 dark:text-white mb-2 tracking-tight">BEM VINDO AO!</h3>
-                <p class="text-1xl font-black text-center text-gray-800 dark:text-white mb-2 tracking-tight">simulador de emprestimo</p>
+                <h3 class="text-2xl font-black text-center text-gray-800 dark:text-white mb-2 tracking-tight">BEM VINDO!</h3>
+                <p class="text-1xl font-black text-center text-gray-800 dark:text-white mb-2 tracking-tight">Simulador de emprestimo</p>
                 <p class="text-sm font-medium text-center text-gray-500 dark:text-[#a0a0a0] mb-8">Como deseja aceder ao sistema?</p>
                 
                 <div class="flex flex-col gap-4 w-full">
@@ -590,10 +596,10 @@
                 
                 <!-- Teclado Numérico da Senha -->
                 <div class="grid grid-cols-3 gap-3 w-full mb-6">
-                    <button v-for="n in [1,2,3,4,5,6,7,8,9]" :key="n" @click="passwordInput += n" class="py-4 text-2xl font-black rounded-[20px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white btn-cta hover:bg-gray-50 dark:hover:bg-white/5">{{ n }}</button>
-                    <button @click="passwordInput = ''" class="py-4 text-xl font-bold rounded-[20px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-red-500 dark:text-red-400 btn-cta hover:bg-gray-50 dark:hover:bg-white/5">C</button>
-                    <button @click="passwordInput += '0'" class="py-4 text-2xl font-black rounded-[20px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white btn-cta hover:bg-gray-50 dark:hover:bg-white/5">0</button>
-                    <button @click="passwordInput = passwordInput.slice(0, -1)" class="py-4 text-xl font-bold rounded-[20px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white btn-cta hover:bg-gray-50 dark:hover:bg-white/5">
+                    <button v-for="n in [1,2,3,4,5,6,7,8,9]" :key="n" @click="handlePasswordInput(n)" class="py-4 text-2xl font-black rounded-[20px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white btn-cta hover:bg-gray-50 dark:hover:bg-white/5">{{ n }}</button>
+                    <button @click="passwordInput = ''; loginError = false" class="py-4 text-xl font-bold rounded-[20px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-red-500 dark:text-red-400 btn-cta hover:bg-gray-50 dark:hover:bg-white/5">C</button>
+                    <button @click="handlePasswordInput(0)" class="py-4 text-2xl font-black rounded-[20px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white btn-cta hover:bg-gray-50 dark:hover:bg-white/5">0</button>
+                    <button @click="passwordInput = passwordInput.slice(0, -1); loginError = false" class="py-4 text-xl font-bold rounded-[20px] bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-200 dark:border-white/10 text-gray-800 dark:text-white btn-cta hover:bg-gray-50 dark:hover:bg-white/5">
                         <i class="fa-solid fa-delete-left"></i>
                     </button>
                 </div>
@@ -703,6 +709,8 @@
                 const clientNameInput = ref('');
                 const deferredPrompt = ref(null);
                 const showInstallBtn = ref(false);
+                
+                const currentCDI = ref(0);
 
                 // Função acionada ao selecionar uma opção no modal inicial
                 const selectRole = (role) => {
@@ -784,6 +792,25 @@
                     if (!newOptions.includes(installments.value)) installments.value = newOptions[0];
                 });
 
+                const fetchCDIToday = async () => {
+                    try {
+                        const response = await fetch(`https://brasilapi.com.br/api/taxas/v1?t=${new Date().getTime()}`);
+                        const data = await response.json();
+                        const cdiData = data.find(taxa => taxa.nome === 'CDI');
+                        
+                        if (cdiData && cdiData.valor) {
+                            currentCDI.value = cdiData.valor;
+                            const calculatedRate = parseFloat((cdiData.valor * 0.38).toFixed(3));
+                            
+                            settings.value.serviceRate = calculatedRate;
+                            tempSettings.value.serviceRate = calculatedRate;
+                            saveData();
+                        }
+                    } catch (error) {
+                        console.error("Falha ao atualizar CDI:", error);
+                    }
+                };
+
                 onMounted(() => {
                     const savedData = localStorage.getItem('appTaxasDataPremiumV4');
                     if (savedData) {
@@ -808,6 +835,8 @@
                     }
 
                     applyThemeMode(settings.value.isDarkMode);
+
+                    fetchCDIToday(); // Busca o CDI atual e ajusta a comissão
 
                     window.addEventListener('beforeinstallprompt', (e) => {
                         e.preventDefault();
@@ -884,6 +913,20 @@
                         totalTaxPercent: valorCobrar > 0 ? ((valorCobrar - valorReceber) / valorCobrar) * 100 : 0
                     };
                 });
+
+                const handlePasswordInput = (val) => {
+                    // Adiciona o valor
+                    passwordInput.value += String(val);
+                    loginError.value = false; // Esconde mensagem de erro se estiver a digitar de novo
+                    
+                    // Se o tamanho da senha digitada for igual ao da senha real, verifica automaticamente
+                    if (passwordInput.value.length === String(settings.value.password).length) {
+                        // Pequeno atraso de 150ms apenas para o utilizador ver o último pontinho a aparecer (melhor UX)
+                        setTimeout(() => {
+                            handleLogin();
+                        }, 150);
+                    }
+                };
 
                 const handleLogin = () => {
                     if (passwordInput.value === settings.value.password) {
@@ -987,10 +1030,10 @@
                 return {
                     activeTab, showDetails, settings, machines, history, rawValueCents, showCalculatorNumpad, displayValue, handleNumpad, installments, calcMode, selectedMachineId,
                     isAdmin, showWelcomeModal, selectRole, showLogin, passwordInput, loginError, settingsSubTab, editingMachineId, tempMachine, tempSettings, showSaveSuccess,
-                    themeOptions, theme, results, formatCurrency, formatDate, handleLogin, closeLogin, handleLogout, shareToWhatsApp,
+                    themeOptions, theme, results, formatCurrency, formatDate, handlePasswordInput, handleLogin, closeLogin, handleLogout, shareToWhatsApp,
                     openSaveModal, confirmSaveSimulation, showClientNameModal, clientNameInput,
                     clearHistory, startEditingMachine, startCreatingMachine, saveMachine, deleteMachine, saveGlobalSettings,
-                    showInstallBtn, installPWA, cycleTheme, toggleDarkMode, currentGlowColor, availableInstallments
+                    showInstallBtn, installPWA, cycleTheme, toggleDarkMode, currentGlowColor, availableInstallments, currentCDI
                 };
             }
         }).mount('#app');
